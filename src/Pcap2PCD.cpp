@@ -1,19 +1,7 @@
 #include <pcl/common/transforms.h>
 #include <io/PcapReader.hpp>
-#include <io/TrajIO.hpp>
-#include <io/LasOperator.hpp>
 #include <visualization/ShowCloud.hpp>
-#include <build_map/MapManager.hpp>
 #include <argparse.hpp>
-
-#define USE_OCTO_MAP 1
-#define USE_LOAM_POSE 0 // 是否使用LOAM的位姿表示方法(欧拉角)
-#define TEST_TF_2_EULER 0
-
-#if USE_LOAM_POSE
-#include <loam/transform.hpp>
-Twist _transformSum;
-#endif
 
 using namespace std;
 using namespace Eigen;
@@ -65,7 +53,7 @@ int main(int argc, const char **argv)
     parser.addArgument("-c", "--calib_matrix"); //是否使用一个初始的标定矩阵变换雷达帧（斜装头建图时才用到）
     parser.parse(argc, argv);
 
-    string::out_dir = parser.get("out_dir") + "/" + getFileName(parser.get("pcap"));
+    string out_dir = parser.get("out_dir") + "/" + getFileName(parser.get("pcap"));
     CreateDir(out_dir.c_str());
 
     if (parser.count("show"))

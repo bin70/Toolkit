@@ -18,5 +18,5 @@ include_directories(${PCL_INCLUDE_DIRS})
 include_directories(include)
 
 add_executable(pcap2PCD src/Pcap2PCD.cpp)
-target_link_libraries(pcap2PCD pcapReader ${PCL_LIBRARIES} -lpcap)
+target_link_libraries(pcap2PCD ${PCL_LIBRARIES} -lpcap)
 
