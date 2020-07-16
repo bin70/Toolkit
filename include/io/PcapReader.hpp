@@ -1076,21 +1076,85 @@ class pcapReader
 };
 
 //=========================================//
-
+// data_n 数组内的数据说明:
+// - data_n[0] 时间戳整数部分(秒)
+// - data_n[1] 时间戳小数部分(微秒)
+// - data_n[2] 线束编号(LOAM算法必需)
+// - data_n[3] 有效距离
+//=========================================//
 class PointCloudReader{
     public:
-        PointCloudReader();
+        PointCloudReader():inited(false){}
         ~PointCloudReader(){}
         void setPcapFile(std::string _fileName) { fileNamePcap = _fileName; }
         void setCalibFile(std::string _fileName) { calibrationPath = _fileName; }
         void setVoxelSize(float _voxelLeafsize) { voxelLeafsize = _voxelLeafsize; }
 		void setValidDistance(float value){ distanceControl = value; }
-        void init();
-        bool readPointCloud(PointCloud::Ptr _cloud, long long _frameID);
+        void init()
+		{
+			if (!open_pcap()){
+				printf("Cannot open pcap file:%s!\n", fileNamePcap.c_str());
+				exit(-1);
+			}
+
+			if (reader.totalFrame() < minPcapSize){
+				printf("The pcap data is too small!\n");
+				exit(-1);
+			}
+			
+			std::cout << "========================= Information of pcap file ============================\n" 
+					<< "\tpcapfile name = " << getFileName(fileNamePcap) << std::endl
+					<< "\tframe number = " << reader.totalFrame() << std::endl
+					<< "\tcalibration file = " << calibrationPath << std::endl
+					<< "==============================================================================" << std::endl;
+			inited = true;
+		}
+
+		/***********************************************************
+		 * 返回false表示读取失败
+		 ***********************************************************/
+        bool readPointCloud(PointCloud::Ptr _cloud, long long _frameID)
+		{
+			if(!inited || !_cloud) return false;
+			
+			if(!reader.capture(frame, _frameID)){
+				std::cout << "Read frame " << _frameID << "from []" << fileNamePcap << " failed." << std::endl;    
+				return false;
+			}
+
+			_cloud->clear();
+			for (int n = 0; n < frame.numLine; n++){
+				for (int i = 0; i < frame.lines[n].num; i++){
+					PointType pt;
+					pt.x = (float)frame.lines[n].pPosition[i].x;
+					pt.y = (float)frame.lines[n].pPosition[i].y;
+					pt.z = (float)frame.lines[n].pPosition[i].z;
+					float dist = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+					if (distanceControl && (dist > distanceControl))
+						continue;
+					
+					pt.intensity = frame.lines[n].pIntensity[i] + 0.1f;
+					double timestamp = frame.lines[n].pTimestamp[i] / 1e6; //秒为单位
+					pt.data_n[0] = int(timestamp);           //整数部分为秒
+					pt.data_n[1] = timestamp - pt.data_n[0]; //微秒
+					pt.data_n[2] = n;
+					pt.data_n[3] = dist;
+					_cloud->points.push_back(pt);
+				}
+			}
+			_cloud->height = 1;
+			_cloud->width = _cloud->points.size();
+			_cloud->is_dense = true;
+			return true;
+		}
 
     private:
-        bool open_pcap();
-        //void voxel(PointCloud::Ptr cloud);
+        bool open_pcap()
+		{
+			if (fileNamePcap == "" || calibrationPath == "")
+				return false;
+			return reader.open(fileNamePcap, calibrationPath);
+		}
 
     private:
         //long long frameID;
@@ -1101,7 +1165,6 @@ class PointCloudReader{
 
         pcapReader reader;
         veloFrame frame;
-        //pcl::VoxelGrid<PointType> grid;
         bool inited;
         const int minPcapSize = 100;
 };

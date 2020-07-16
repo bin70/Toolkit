@@ -15,7 +15,10 @@
 Twist _transformSum;
 #endif
 
-std::string getCalibFile(int data_type)
+using namespace std;
+using namespace Eigen;
+
+string getCalibFile(int data_type)
 {
     switch (data_type)
     {
@@ -24,20 +27,16 @@ std::string getCalibFile(int data_type)
     case 1:
         return "../resource/HDL-32.xml";
     case 2:
-    //    return "../resource/VLP-32a.xml";
-    //case 3:
         return "../resource/VLP-32c.xml";
-    //case 4:
-    //    return "../resource/VLP-32C.xml";
     default:
-        std::cout << "Data type error!" << std::endl;
+        cout << "Data type error!" << endl;
     }
 }
 
-Eigen::Matrix4d loadCalibMatrix()
+Matrix4d loadCalibMatrix()
 {
-    std::ifstream matrix_file("../resource/autoCalibMatrix.txt");
-    Eigen::Matrix4d matrix;
+    ifstream matrix_file("../resource/autoCalibMatrix.txt");
+    Matrix4d matrix;
     for(int i=0; i<4; ++i)
         for(int j=0; j<4; ++j)
             matrix_file >> matrix(i,j);
@@ -49,7 +48,7 @@ bool is_show = false;
 float resolution = 0.03;
 int begin_id = 0;
 int end_id = -1;
-std::string out_dir = "./result";
+string out_dir = "./output";
 
 int main(int argc, const char **argv)
 {
@@ -66,8 +65,7 @@ int main(int argc, const char **argv)
     parser.addArgument("-c", "--calib_matrix"); //是否使用一个初始的标定矩阵变换雷达帧（斜装头建图时才用到）
     parser.parse(argc, argv);
 
-    out_dir = parser.get("out_dir");
-    
+    string::out_dir = parser.get("out_dir") + "/" + getFileName(parser.get("pcap"));
     CreateDir(out_dir.c_str());
 
     if (parser.count("show"))
@@ -105,7 +103,7 @@ int main(int argc, const char **argv)
     consoleProgress(0);
 
     // 把201标定到202上的矩阵
-    Eigen::Matrix4d calibMatrix = loadCalibMatrix();
+    Matrix4d calibMatrix = loadCalibMatrix();
 
     while (reader.readPointCloud(cloud, frameID))
     {
@@ -114,7 +112,7 @@ int main(int argc, const char **argv)
         {
             if(!reader2.readPointCloud(cloud2, frameID))
             {
-                std::cout << "pcap2 is end!" << std::endl;
+                cout << "pcap2 is end!" << endl;
                 break;
             }
             // 合并两帧
@@ -122,16 +120,14 @@ int main(int argc, const char **argv)
             *cloud += *cloud2;
         }
 
-        // 使用斜着的头建图时才会用到
+        //  单独使用斜着的头建图时才会用到
         if(parser.count("calib_matrix"))
-        {
             pcl::transformPointCloud(*cloud, *cloud, calibMatrix);
-        }
 
         if (is_show)
             vis_utils::ShowCloud(cloud, viewer, "intensity", 3);
 
-        std::string out_path = out_dir + "/" + std::to_string(frameID) + ".pcd";
+        string out_path = out_dir + "/" + to_string(frameID) + ".pcd";
         pcl::io::savePCDFileBinaryCompressed<PointType>(out_path, *cloud);
     
         // 间隔几帧
@@ -144,7 +140,7 @@ int main(int argc, const char **argv)
         consoleProgress(frameID, begin_id, end_id);
     }
 
-    std::cout << "压缩的PCD文件保存至: " << out_dir << std::endl;
+    cout << "压缩的PCD文件保存至: " << out_dir << endl;
 
     return 0;
 }
