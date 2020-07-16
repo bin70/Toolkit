@@ -20,5 +20,3 @@ include_directories(include)
 add_executable(pcap2PCD src/Pcap2PCD.cpp)
 target_link_libraries(pcap2PCD pcapReader ${PCL_LIBRARIES} -lpcap)
 
-add_executable(pcdBuildMap src/PcdBuildMap.cpp)
-target_link_libraries(pcdBuildMap ${PCL_LIBRARIES})
