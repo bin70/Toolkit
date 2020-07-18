@@ -59,6 +59,12 @@ public:
         octree->addPointToCloud(tempPoint, map);
     }
   }
+
+  void addFrame(PointCloud::Ptr frame)
+  {
+    AddFrameToMap(frame);
+  }
+
   void UpdateMap(PointCloud::Ptr cur_frame)
   {
     octree->deleteTree();

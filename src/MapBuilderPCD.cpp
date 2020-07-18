@@ -19,9 +19,9 @@ int main(int argc, const char** argv)
     parser.addArgument("-b", "--begin_id", true);
     parser.addArgument("-e", "--end_id", true);
     parser.addArgument("-t", "--traj_type", true);
-    parser.addArgument("-o", "--output_dir");
     parser.addArgument("-s", "--show_cloud");
     parser.addArgument("-r", "--resolution");
+    parser.addArgument("-c", "--calib_matrix");
     parser.parse(argc, argv);
 
     string input_dir = parser.get("input_dir");    
@@ -33,11 +33,6 @@ int main(int argc, const char** argv)
 
     if(parser.count("resolution"))
         resolution = parser.get<float>("resolution");
-    
-    string output_dir = input_dir+"/output_"+to_string(begin_id)+"_"+to_string(end_id);
-    if(parser.count("output_dir"))
-        output_dir = parser.get("output_dir");
-    fop.makeDir(output_dir);
 
     PCDReader reader(input_dir+"/PCD");
     reader.setBinary(true);
@@ -51,6 +46,7 @@ int main(int argc, const char** argv)
     MapManager map(resolution);
     map.update();
 
+    consoleProgress(0);
     while(reader.readPointCloud(cloud, frame_id))
     {
         // TODO: 增加重建LOAM的特征地图并保存的功能
@@ -58,11 +54,19 @@ int main(int argc, const char** argv)
         Matrix4d m = traj.getPoseMatrix(frame_id);
         pcl::transformPointCloud(cloud, cloud, m);
         
-        
+        map.addFrame(cloud);
+        if(show_cloud)
+            ;
 
         frame_id += traj.getFrameGap();
         if(frame_id>end_id) break;
+        consoleProgress(frame_id, begin_id, end_id);
     }
+
+    string out_path = input_dir+"/map_"+to_string(begin_id)+"_"+to_string(end_id)+".pcd";
+    pcl::io::savePCDFileBinaryCompressed(out_path, *map.getMapPtr());
+    cout << "压缩的PCD点云地图保存到: " << out_path << endl; 
+    return 0;
 }
 
 
