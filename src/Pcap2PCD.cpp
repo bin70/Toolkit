@@ -1,5 +1,6 @@
 #include <pcl/common/transforms.h>
 #include <io/PcapReader.hpp>
+#include <io/FileOperator.hpp>
 #include <visualization/ShowCloud.hpp>
 #include <argparse.hpp>
 
@@ -36,7 +37,7 @@ bool is_show = false;
 float resolution = 0.03;
 int begin_id = 0;
 int end_id = -1;
-string out_dir = "./output";
+FileOperator fop;
 
 int main(int argc, const char **argv)
 {
@@ -54,19 +55,19 @@ int main(int argc, const char **argv)
     parser.parse(argc, argv);
 
     string out_dir = parser.get("out_dir") + "/" + getFileName(parser.get("pcap"));
-    CreateDir(out_dir.c_str());
+    if(parser.count("begin_id"))
+        begin_id = parser.get<int>("begin_id");
+    if(parser.count("end_id"))
+        end_id = parser.get<int>("end_id");
+
+    out_dir += "_" + to_string(begin_id) + "_" + to_string(end_id) + "/PCD";
+    fop.makeDir(out_dir);
 
     if (parser.count("show"))
     {   
         is_show = parser.get<bool>("show");
         viewer = new pcl::visualization::PCLVisualizer("default");
     }
-
-    if(parser.count("begin_id"))
-        begin_id = parser.get<int>("begin_id");
-    
-    if(parser.count("end_id"))
-        end_id = parser.get<int>("end_id");
 
     PointCloudReader reader;
     reader.setPcapFile(parser.get("pcap"));

@@ -13,19 +13,41 @@ class FileOperator{
 public:
     bool makeDir(string path)
     {
-        if(access(output_dir.c_str(), 0) != 0)
-            if(mkdir(output_dir.c_str(), 0755) == -1)
+        return CreateDir(path.c_str());
+    }
+
+    inline int CreateDir(const char *sPathName)
+    {
+        char DirName[256];
+        strcpy(DirName, sPathName);
+        int i, len = strlen(DirName);
+        if (DirName[len - 1] != '/')
+            strcat(DirName, "/");
+        len = strlen(DirName);
+        for (i = 1; i < len; i++)
+        {
+            if (DirName[i] == '/' || DirName[i] == '\\')
             {
-                perror("makeDir error: ");
-                return false;
+                DirName[i] = 0;
+                if (access(DirName, 0) != 0) //存在则返回0
+                {
+                    if (mkdir(DirName, 0755) == -1)
+                    {
+                        perror("mkdir   error");
+                        return false;
+                    }
+                }
+                DirName[i] = '/';
             }
+        }
+
         return true;
     }
 
     Matrix loadMatrix(string path)
     {
         if(access(path.c_str(), 0) != 0) perror("load matrix error: ");
-        std::oftream f(path);
+        std::ifstream f(path);
         Matrix m;
         for(int i=0; i<4; ++i)
             for(int j=0; j<4; ++j)
