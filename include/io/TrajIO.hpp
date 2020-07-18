@@ -148,7 +148,15 @@ public:
                   << "==============================================================================" << std::endl;
     }
         
-    
+    void checkID(int b, int e)
+    {
+        if(b < startID || e > endID)
+        {
+            std::cout << "specified ID: (" << b << ", " << e << ") is beyond the range in trajectory!" << std::endl;
+            exit(-1); 
+        }
+    }
+
     PoseNode getPose(int frameID)
     {
         assert(traj.count(frameID) > 0);
