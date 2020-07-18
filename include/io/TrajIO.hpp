@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <map>
 #include <common.hpp>
-#include <loam/transform.hpp>
+#include <math/TransformTool.hpp>
 
 enum TrajType{
     ROS_LOAM, G2O, KITTI
@@ -83,7 +83,6 @@ public:
     Eigen::Quaterniond qua;
     Eigen::Vector3d pos;
     Eigen::Matrix<double, 6, 1> loamTrans;
-    //std::vector<double> loamTrans2;
 
     PoseNode() : frameID(0), timestamp(0), //label(false),
                  tf(Eigen::Matrix4d::Identity())
@@ -238,7 +237,7 @@ private:
             traj_file_ >> curPose.loamTrans[i];
         traj_file_ >> curPose.timestamp;
 
-        curPose.tf = loam::euler2matrix(curPose.loamTrans);
+        curPose.tf = tt.euler2matrix(curPose.loamTrans);
         Eigen::Matrix3d r = curPose.tf.block(0, 0, 3, 3);
         Eigen::Quaterniond q(r);
         curPose.qua = q;
@@ -323,6 +322,7 @@ private:
     }
 
 private:
+    TransformTool tt;
     int pose_cnt;
     std::string unused;
     long long startID;
