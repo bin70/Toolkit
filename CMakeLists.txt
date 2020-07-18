@@ -15,8 +15,14 @@ find_package(PCL 1.8 REQUIRED)
 add_definitions(${PCL_DEFINITIONS})
 include_directories(${PCL_INCLUDE_DIRS})
 
+find_package(catkin REQUIRED COMPONENTS tf)
+include_directories(${catkin_INCLUDE_DIRS})
+
 include_directories(include)
 
 add_executable(pcap2PCD src/Pcap2PCD.cpp)
 target_link_libraries(pcap2PCD ${PCL_LIBRARIES} -lpcap)
+
+add_executable(testTransform src/TestTransform.cpp)
+target_link_libraries(testTransform ${catkin_LIBRARIES})
 
