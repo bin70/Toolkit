@@ -26,3 +26,6 @@ target_link_libraries(pcap2PCD ${PCL_LIBRARIES} -lpcap)
 add_executable(testTransform src/TestTransform.cpp)
 target_link_libraries(testTransform ${catkin_LIBRARIES})
 
+add_executable(mapBuilder src/MapBuilderPCD.cpp)
+target_link_libraries(mapBuilder ${PCL_LIBRARIES})
+
