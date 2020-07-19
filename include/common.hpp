@@ -32,7 +32,10 @@
 // eigen
 #include <Eigen/Dense>
 
+#define DEBUG 1
+
 typedef pcl::PointXYZINormal PointType;
+//typedef pcl::PointXYZI PointType;
 typedef pcl::PointCloud<PointType> PointCloud;
 
 inline std::string getFileName(std::string path)
