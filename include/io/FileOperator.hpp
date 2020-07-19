@@ -5,11 +5,12 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdio.h>
-#include <common.hpp>
+#include <eigen3/Eigen/Dense>
 
 class FileOperator{
     typedef std::string string;
     typedef Eigen::Matrix4d Matrix;
+
 public:
     bool makeDir(string path)
     {
