@@ -84,7 +84,7 @@ struct HDLRGB
 //========================================//
 class vtkPacketFileReader
 {
-  public:
+public:
 	vtkPacketFileReader()
 	{
 		this->PCAPFile = 0;
@@ -201,7 +201,7 @@ class vtkPacketFileReader
 		return true;
 	}
 
-  protected:
+protected:
 	double GetElapsedTime(const struct timeval &end, const struct timeval &start)
 	{
 		return (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec) / 1000000.00;
@@ -219,7 +219,7 @@ class veloBuffer
 	char *mpBuf;
 	int mSize;
 
-  public:
+public:
 	veloBuffer()
 	{
 		mpBuf = NULL;
@@ -270,7 +270,7 @@ class veloBuffer
 
 class xyzPoint
 {
-  public:
+public:
 	xyzPoint() { x = y = z = 0.0f; }
 	~xyzPoint() {}
 
@@ -286,7 +286,7 @@ class veloLine
 	std::vector<float> mbufDist;
 	std::vector<double> mbufTime;
 
-  public:
+public:
 	veloLine()
 	{
 		msize = num = 0;
@@ -344,7 +344,7 @@ class veloLine
 			// bool bRet = mbufPos.create(msize, true) && mbufInt.create(msize, true) && mbufAzim.create(msize, true) && mbufDist.create(msize, true) && mbufTime.create(msize, true);
 			// if (!bRet)
 			// 	return false;
-		    mbufPos.resize(msize);
+			mbufPos.resize(msize);
 			mbufInt.resize(msize);
 			mbufAzim.resize(msize);
 			mbufDist.resize(msize);
@@ -369,7 +369,7 @@ class veloLine
 };
 class veloFrame
 {
-  public:
+public:
 	veloFrame() { totalPoint = numLine = 0; }
 	~veloFrame() {}
 
@@ -436,7 +436,7 @@ class pcapReader
 
 	veloFrame *mptrVF;
 
-  public:
+public:
 	pcapReader()
 	{
 		mtotalFrame = 0;
@@ -523,7 +523,7 @@ class pcapReader
 		//return this->Internal->Datasets.back();
 	}
 
-  private:
+private:
 	int ReadFrameInformation(void)
 	{
 		vtkPacketFileReader reader;
@@ -865,7 +865,7 @@ class pcapReader
 				nextblockdsr0 = HDL32AdjustTimeStamp(firingBlock + 1, 0);
 				blockdsr0 = HDL32AdjustTimeStamp(firingBlock, 0);
 			}
-			else if (CalibrationReportedNumLasers == 32 && distance_resolution_mm >0.39)
+			else if (CalibrationReportedNumLasers == 32 && distance_resolution_mm > 0.39)
 			{
 				timestampadjustment = VLP32CAdjustTimeStamp(firingBlock, dsr);
 				nextblockdsr0 = VLP32CAdjustTimeStamp(firingBlock + 1, 0);
@@ -1046,7 +1046,7 @@ class pcapReader
 	static int Round(float f) { return static_cast<int>(f + (f >= 0 ? 0.5 : -0.5)); }
 	static int Round(double f) { return static_cast<int>(f + (f >= 0 ? 0.5 : -0.5)); }
 
-  protected:
+protected:
 	std::vector<fpos_t> FilePositions;
 	std::vector<int> Skips;
 
@@ -1082,91 +1082,180 @@ class pcapReader
 // - data_n[2] 线束编号(LOAM算法必需)
 // - data_n[3] 有效距离
 //=========================================//
-class PointCloudReader{
-    public:
-        PointCloudReader():inited(false){}
-        ~PointCloudReader(){}
-        void setPcapFile(std::string _fileName) { fileNamePcap = _fileName; }
-        void setCalibFile(std::string _fileName) { calibrationPath = _fileName; }
-        void setVoxelSize(float _voxelLeafsize) { voxelLeafsize = _voxelLeafsize; }
-		void setValidDistance(float value){ distanceControl = value; }
-        void init()
+class PointCloudReader
+{
+public:
+	PointCloudReader() : inited(false) {}
+	~PointCloudReader() {}
+	void setPcapFile(std::string _fileName) { fileNamePcap = _fileName; }
+	void setCalibFile(std::string _fileName) { calibrationPath = _fileName; }
+	void setVoxelSize(float _voxelLeafsize) { voxelLeafsize = _voxelLeafsize; }
+	void setValidDistance(float value) { distanceControl = value; }
+	void init()
+	{
+		if (!open_pcap())
 		{
-			if (!open_pcap()){
-				printf("Cannot open pcap file:%s!\n", fileNamePcap.c_str());
-				exit(-1);
-			}
-
-			if (reader.totalFrame() < minPcapSize){
-				printf("The pcap data is too small!\n");
-				exit(-1);
-			}
-			
-			std::cout << "========================= Information of pcap file ============================\n" 
-					<< "\tpcapfile name = " << getFileName(fileNamePcap) << std::endl
-					<< "\tframe number = " << reader.totalFrame() << std::endl
-					<< "\tcalibration file = " << calibrationPath << std::endl
-					<< "==============================================================================" << std::endl;
-			inited = true;
+			printf("Cannot open pcap file:%s!\n", fileNamePcap.c_str());
+			exit(-1);
 		}
 
-		/***********************************************************
+		if (reader.totalFrame() < minPcapSize)
+		{
+			printf("The pcap data is too small!\n");
+			exit(-1);
+		}
+
+		std::cout << "========================= Information of pcap file ============================\n"
+				  << "\tpcapfile name = " << getFileName(fileNamePcap) << std::endl
+				  << "\tframe number = " << reader.totalFrame() << std::endl
+				  << "\tcalibration file = " << calibrationPath << std::endl
+				  << "==============================================================================" << std::endl;
+		inited = true;
+	}
+
+	/***********************************************************
 		 * 返回false表示读取失败
 		 ***********************************************************/
-        bool readPointCloud(PointCloud::Ptr _cloud, long long _frameID)
-		{
-			if(!inited || !_cloud) return false;
-			
-			if(!reader.capture(frame, _frameID)){
-				std::cout << "Read frame " << _frameID << "from []" << fileNamePcap << " failed." << std::endl;    
-				return false;
-			}
+	bool readPointCloud(PointCloud::Ptr _cloud, long long _frameID)
+	{
+		if (!inited || !_cloud)
+			return false;
 
-			_cloud->clear();
-			for (int n = 0; n < frame.numLine; n++){
-				for (int i = 0; i < frame.lines[n].num; i++){
-					PointType pt;
-					pt.x = (float)frame.lines[n].pPosition[i].x;
-					pt.y = (float)frame.lines[n].pPosition[i].y;
-					pt.z = (float)frame.lines[n].pPosition[i].z;
-					float dist = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
-					if (distanceControl && (dist > distanceControl))
-						continue;
-					
-					pt.intensity = frame.lines[n].pIntensity[i] + 0.1f;
-					double timestamp = frame.lines[n].pTimestamp[i] / 1e6; //秒为单位
-					pt.data_n[0] = int(timestamp);           //整数部分为秒
-					pt.data_n[1] = timestamp - pt.data_n[0]; //微秒
-					pt.data_n[2] = n;
-					pt.data_n[3] = dist;
-					_cloud->points.push_back(pt);
-				}
-			}
-			_cloud->height = 1;
-			_cloud->width = _cloud->points.size();
-			_cloud->is_dense = true;
-			return true;
+		if (!reader.capture(frame, _frameID))
+		{
+			std::cout << "Read frame " << _frameID << "from []" << fileNamePcap << " failed." << std::endl;
+			return false;
 		}
 
-    private:
-        bool open_pcap()
+		_cloud->clear();
+		for (int n = 0; n < frame.numLine; n++)
 		{
-			if (fileNamePcap == "" || calibrationPath == "")
-				return false;
-			return reader.open(fileNamePcap, calibrationPath);
+			for (int i = 0; i < frame.lines[n].num; i++)
+			{
+				PointType pt;
+				pt.x = (float)frame.lines[n].pPosition[i].x;
+				pt.y = (float)frame.lines[n].pPosition[i].y;
+				pt.z = (float)frame.lines[n].pPosition[i].z;
+				float dist = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+				if (distanceControl && (dist > distanceControl))
+					continue;
+
+				pt.intensity = frame.lines[n].pIntensity[i] + 0.1f;
+				double timestamp = frame.lines[n].pTimestamp[i] / 1e6; //秒为单位
+				pt.data_n[0] = int(timestamp);						   //整数部分为秒
+				pt.data_n[1] = timestamp - pt.data_n[0];			   //微秒
+				pt.data_n[2] = n;
+				pt.data_n[3] = dist;
+				_cloud->points.push_back(pt);
+			}
 		}
+		_cloud->height = 1;
+		_cloud->width = _cloud->points.size();
+		_cloud->is_dense = true;
+		return true;
+	}
 
-    private:
-        //long long frameID;
-        std::string fileNamePcap;
-        std::string calibrationPath;
-        float distanceControl = 25.0;
-        float voxelLeafsize;
+private:
+	bool open_pcap()
+	{
+		if (fileNamePcap == "" || calibrationPath == "")
+			return false;
+		return reader.open(fileNamePcap, calibrationPath);
+	}
 
-        pcapReader reader;
-        veloFrame frame;
-        bool inited;
-        const int minPcapSize = 100;
+private:
+	//long long frameID;
+	std::string fileNamePcap;
+	std::string calibrationPath;
+	float distanceControl = 25.0;
+	float voxelLeafsize;
+
+	pcapReader reader;
+	veloFrame frame;
+	bool inited;
+	const int minPcapSize = 100;
 };
 
+class Synchrotimer
+{
+public:
+	void setStartFrameID(int value) { startFrameID = value;}
+	/**
+	 * 获取雷达帧(第一个点)的时间戳, 以秒为单位
+	 */
+	double getTime(PointCloud::Ptr frame)
+	{
+		return frame->points[0].data_n[0] + frame->points[0].data_n[1];
+	}
+
+	/**
+	 * 获取雷达帧(最后一个点)的时间戳, 以秒为单位
+	 */
+	double getEndTime(PointCloud::Ptr frame)
+	{
+		return frame->points.back().data_n[0] + frame->points.back().data_n[1];
+	}
+
+	/**
+	 * 使两个雷达帧的时间差小于半帧时间，纠正的是 pcap1 的 frameID
+	 * 有三种返回的结果:
+	 * [-1]: pcap2无效，跳过它
+	 * [ 0]: 已纠正pcap1的frameID何pcap2的frameOffset, 请重新读取
+	 * [ 1]: 无需纠正，可以合并  
+	 */
+	int correctFrameOffset(PointCloud::Ptr frame1,
+		PointCloud::Ptr frame2, long long &frameID, int &offset)
+	{
+		//202也可能掉帧，判断一下
+		float frameTime = getEndTime(frame2) - getTime(frame2);
+
+		if (frame2->points.size() < 8000 || frameTime > 0.06 || frameTime < 0.04)
+		{
+			std::cout << "Attention: 202可能存在掉帧或者数据不稳定情况!!!\n";
+			return -1; //不纠正
+		}
+
+		// 以第一个点时间戳作为当前帧时间戳
+		float timeOffset = getTime(frame2) - getTime(frame1);
+		frameTime = 0.05; //正确的时间差
+
+		//计算两个激光头之间的对应帧号差
+		int _a = timeOffset / frameTime;
+		// 让时间差位于半帧的时间之内
+		_a += 1.9 * (timeOffset - _a * frameTime) / frameTime;
+		offset -= _a;
+		std::cout << _a << std::endl;
+		if (abs(_a) > 0)
+		{
+			if (DEBUG)
+			{
+				std::cout << "======================offset============================\n"
+						  << "FrameID = " << frameID << "\t"
+						  << "Offset = " << -_a << "\t"
+						  << "Sumoffset = " << offset << "\t "
+						  << "Timeoffset  = " << timeOffset << std::endl;
+				//showTime(frame1, frameID, "202");
+				//showTime(frame2, reader2.frameNumber - skipFrameNumber, "201");
+				std::cout << "=============================================================\n";
+				if (abs(_a) > 1 && frameID - startFrameID > 5)
+				{
+					std::cout << "\nAttention: Frame2's timestamp is changing more than 0.25s!!!\n";
+					return -1;
+				}
+			}
+
+			if (frameID + offset < 3)
+			{
+				frameID += _a;
+				#if DEBUG
+				std::cout << "Change ID of frame1 to " << frameID << std::endl;
+				#endif
+			}
+			return 0;
+		}
+		return 1;
+	}
+private:
+	int startFrameID = 0;
+};
 #endif
