@@ -1,5 +1,6 @@
 #include <pcl/common/transforms.h>
 #include <io/PcapReader.hpp>
+#include <io/PCDOperator.hpp>
 #include <io/FileOperator.hpp>
 #include <visualization/ShowCloud.hpp>
 #include <argparse.hpp>
@@ -77,6 +78,8 @@ int main(int argc, const char **argv)
     reader.init();
 
     PointCloudReader reader2;
+    Synchrotimer sync;
+    int frameOffset = 0;
     if(parser.count("pcap2"))
     {
         reader2.setPcapFile(parser.get("pcap2"));
@@ -84,6 +87,8 @@ int main(int argc, const char **argv)
         reader2.setVoxelSize(0.03); // 单帧分辨率
         reader2.setValidDistance(25.0);
         reader2.init();
+
+        sync.setStartFrameID(begin_id);
     }
 
     PointCloud::Ptr cloud(new PointCloud);
@@ -99,14 +104,30 @@ int main(int argc, const char **argv)
         // 使用双头的数据建图
         if(parser.count("pcap2"))
         {
-            if(!reader2.readPointCloud(cloud2, frameID))
+            if(!reader2.readPointCloud(cloud2, frameID+frameOffset))
             {
                 cout << "pcap2 is end!" << endl;
                 break;
             }
-            // 合并两帧
-            pcl::transformPointCloud(*cloud2, *cloud2, calibMatrix);
-            *cloud += *cloud2;
+            
+            switch(sync.correctFrameOffset(cloud, cloud2, frameID, frameOffset))
+            {
+                case 0:
+                    continue;
+                case 1:
+                    pcl::transformPointCloud(*cloud2, *cloud2, calibMatrix);
+                    // 分开存同步好的双雷达数据
+                    savePCD(cloud, out_dir + "/201", frameID);
+                    savePCD(cloud2, out_dir + "/202", frameID);
+                
+                    // 合并两帧
+                    *cloud += *cloud2;
+                    break;
+                default: // 直接丢弃202的数据，用201的代替
+                    savePCD(cloud, out_dir + "/201", frameID);
+                    savePCD(cloud, out_dir + "/202", frameID);
+                    break;
+            }
         }
 
         //  单独使用斜着的头建图时才会用到
@@ -116,9 +137,8 @@ int main(int argc, const char **argv)
         if (is_show)
             vis_utils::ShowCloud(cloud, viewer, "intensity", 3);
 
-        string out_path = out_dir + "/" + to_string(frameID) + ".pcd";
-        pcl::io::savePCDFileBinaryCompressed<PointType>(out_path, *cloud);
-    
+        savePCD(cloud, out_dir, frameID);
+        
         // 间隔几帧
         frameID += parser.get<int>("gap_of_frame");
 

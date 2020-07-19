@@ -1,4 +1,4 @@
-#include <io/PCDReader.hpp>
+#include <io/PCDOperator.hpp>
 #include <io/TrajIO.hpp>
 #include <io/FileOperator.hpp>
 #include <build_map/MapManager.hpp>
@@ -7,14 +7,34 @@
 #include <pcl/common/common.h>
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <visualization/ShowCloud.hpp>
 
 using namespace std;
 using namespace Eigen;
+using namespace vis_utils;
+using namespace pcl::visualization;
 
 FileOperator fop;
 bool show_cloud = false;
 float resolution = 0.03;
+PCLVisualizer *viewer;
 
+// vlp32的配置
+int _nScanRings = 32;
+float _upperBound = 15.0;
+float _lowerBound = -25.0;
+
+int getLOAMScanID(PointType &p)
+{
+    PointType point;
+    point.x = p.y;
+    point.y = p.z;
+    point.z = p.x;
+    
+    float _factor = (_nScanRings - 1) / (_upperBound - _lowerBound);
+    float angle = std::atan(point.y / std::sqrt(point.x * point.x + point.z * point.z));
+    return int(((angle * 180 / M_PI) - _lowerBound) * _factor + 0.5);;
+}
 
 int main(int argc, const char** argv)
 {
@@ -31,7 +51,10 @@ int main(int argc, const char** argv)
     ;
 
     if(parser.count("show_cloud"))
+    {
         show_cloud = parser.get<bool>("show_cloud");
+        viewer = new PCLVisualizer("show map");
+    }
 
     if(parser.count("resolution"))
         resolution = parser.get<float>("resolution");
@@ -63,6 +86,7 @@ int main(int argc, const char** argv)
         
         PointCloud::Ptr cloud_filtered(new PointCloud);
         
+        #if RANGE_LIMIT
         // 范围滤波器
         pcl::ConditionalRemoval<PointType> cond_removal;
         PointType minP, maxP;
@@ -79,8 +103,9 @@ int main(int argc, const char** argv)
         cond_removal.setCondition(cond);
         cond_removal.setInputCloud(cloud);
         cond_removal.filter(*cloud_filtered);
-
-        // pcl::copyPointCloud(*cloud_filtered, *cloud);
+        #else
+            pcl::copyPointCloud(*cloud, *cloud_filtered);
+        #endif
 
         // 离群点滤波器
         pcl::StatisticalOutlierRemoval<PointType> stat_removal;
@@ -90,17 +115,32 @@ int main(int argc, const char** argv)
         cloud->clear();
         stat_removal.filter(*cloud);
 
+        for(int i=0; i<cloud->points.size(); ++i)
+        {
+            PointType &p =  cloud->points[i];
+            p.curvature = getLOAMScanID(p);
+        }
+
         Matrix4d m = traj.getPoseMatrix(frame_id);
         pcl::transformPointCloud(*cloud, *cloud, m);
-        
+                
         map.addFrame(cloud);
         if(show_cloud)
-            ;
+            ShowCloud(map.getMapPtr(), viewer, "curvature", 2);
 
         frame_id += traj.getFrameGap();
         if(frame_id>end_id) break;
         consoleProgress(frame_id, begin_id, end_id);
     }
+
+    // 跟loam一样的存储方式，为了方便对比显示
+    // for(int i=0; i<map.getMapPtr()->points.size(); ++i)
+    // {
+    //     auto &p = map.getMapPtr()->points[i];
+    //     float temp = p.intensity;
+    //     p.intensity = p.data_n[2];
+    //     p.data_n[2] = temp;
+    // }
 
     string out_path = input_dir+"/map_"+to_string(begin_id)+"_"+to_string(end_id)+".pcd";
     pcl::io::savePCDFileBinaryCompressed(out_path, *map.getMapPtr());

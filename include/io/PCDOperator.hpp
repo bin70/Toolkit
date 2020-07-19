@@ -1,4 +1,9 @@
 #pragma once
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <stdio.h>
 #include <common.hpp>
 
 int frameid(std::string path)
@@ -7,6 +12,37 @@ int frameid(std::string path)
     int end = path.rfind('.');
     std::string id_str = path.substr(begin + 1, end - begin - 1);
     return atoi(id_str.c_str());
+}
+
+// 指定一个保存的文件夹，将会以帧号命名，存下压缩的二进制PCD
+bool savePCD(PointCloud::Ptr &cloud, string save_dir, int frame_id)
+{
+    // 建立文件夹
+    char DirName[256];
+    strcpy(DirName, save_dir.c_str());
+    int i, len = strlen(DirName);
+    if (DirName[len - 1] != '/')
+        strcat(DirName, "/");
+    len = strlen(DirName);
+    for (i = 1; i < len; i++)
+    {
+        if (DirName[i] == '/' || DirName[i] == '\\')
+        {
+            DirName[i] = 0;
+            if (access(DirName, 0) != 0) //存在则返回0
+            {
+                if (mkdir(DirName, 0755) == -1)
+                {
+                    perror("mkdir   error");
+                    return false;
+                }
+            }
+            DirName[i] = '/';
+        }
+    }
+    
+    return (pcl::io::savePCDFileBinaryCompressed<PointType>(
+        save_dir + "/" + std::to_string(frame_id) + ".pcd", *cloud) != -1);
 }
 
 class PCDReader
