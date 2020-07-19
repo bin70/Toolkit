@@ -15,7 +15,7 @@ int frameid(std::string path)
 }
 
 // 指定一个保存的文件夹，将会以帧号命名，存下压缩的二进制PCD
-bool savePCD(PointCloud::Ptr &cloud, string save_dir, int frame_id)
+bool savePCD(PointCloud::Ptr &cloud, std::string save_dir, int frame_id)
 {
     // 建立文件夹
     char DirName[256];
