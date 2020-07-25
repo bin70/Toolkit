@@ -7,7 +7,7 @@
 #include <math/TransformTool.hpp>
 
 enum TrajType{
-    ROS_LOAM, G2O, KITTI
+    ROS_LOAM, G2OT, G2O, KITTI
 };
 
 class TrajIOKITTI
@@ -116,16 +116,21 @@ public:
         assert( CheckFileExist(traj_path.c_str()) == true );
         traj_file_.open(traj_path.c_str());
 
-        if(type != KITTI)
+        if(type != KITTI && type != G2O)
         {// 头文件
         for (int i = 0; i < ignore_lines && !traj_file_.eof(); ++i)
             getline(traj_file_, unused);
         }
+        
+        std::cout << "Reading trajectory. traj_type = " << type << std::endl;
 
         // 读取开始帧号
         if(readPose(type))
             startID = curPose.frameID;
+        
         assert(startID >=0);
+
+        std::cout << "startID = " << startID << std::endl;
 
         // 获取帧间隔
         if(readPose(type))
@@ -189,11 +194,21 @@ public:
         switch(type)
         {
             case ROS_LOAM:
+            {
                 return readPoseLOAM();
+            }
+            case G2OT:
+            {
+                return readPoseG2OT();
+            }
             case G2O:
+            {
                 return readPoseG2O();
+            }
             case KITTI:
+            {
                 return readPoseKITTI();
+            }
         }
     }
 
@@ -255,9 +270,11 @@ private:
         return true;
     }
 
-    bool readPoseG2O()
+    bool readPoseG2OT()
     {
         if(!(traj_file_ >> unused)) return false;
+
+        std::cout << "traj LABEL: " << unused << std::endl;
 
         Eigen::Quaterniond q;
         Eigen::Vector3d v;
@@ -265,6 +282,26 @@ private:
 
         // 9 number each line: {Frame Number, Position[x|y|z], Quaternion[qx|qy|qz|qw], Timestamp(us)}
         traj_file_ >> curPose.frameID >> v(0) >> v(1) >> v(2) >> q.x() >> q.y() >> q.z() >> q.w() >> curPose.timestamp;
+        curPose.qua = q;
+        curPose.pos = v;
+        curPose.tf = Eigen::Matrix4d::Identity();
+        r = q.toRotationMatrix();
+        curPose.tf.block(0, 0, 3, 3) = r;
+        curPose.tf.block(0, 3, 3, 1) = v;
+    
+        traj.insert( std::make_pair(curPose.frameID, curPose) );
+        return true;
+    }
+
+    bool readPoseG2O()
+    {
+        if(!(traj_file_ >> unused)) return false;
+        Eigen::Quaterniond q;
+        Eigen::Vector3d v;
+        Eigen::Matrix3d r;
+
+        // 8 number each line: {Frame Number, Position[x|y|z], Quaternion[qx|qy|qz|qw]}
+        traj_file_ >> curPose.frameID >> v(0) >> v(1) >> v(2) >> q.x() >> q.y() >> q.z() >> q.w();
         curPose.qua = q;
         curPose.pos = v;
         curPose.tf = Eigen::Matrix4d::Identity();
