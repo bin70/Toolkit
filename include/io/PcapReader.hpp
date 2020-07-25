@@ -1076,6 +1076,52 @@ protected:
 };
 
 //=========================================//
+// 线号对应表
+//=========================================//
+std::vector<int> vlp16_scanID = {
+	0, 8, 
+	1, 9,
+	2, 10,
+	3, 11,
+	4, 12,
+	5, 13,
+	6, 14,
+	7, 15
+};
+
+std::vector<int> vlp32_map = {
+	0,  3, 4,  7,
+	8,  11, 12,  16,
+	15,  19, 20,  24,
+	23,  27, 28,  2,
+	31,  1, 6,  10,
+	5, 9, 14, 18,
+	13, 17, 22, 21,
+	26, 25, 30, 29
+};
+
+std::vector<int> vlp32_scanID(32, 0);
+
+std::vector<int> hdl32_scanID = {
+	0,  16,
+	1,  17,
+	2,  18,
+	3,  19,
+	4,  20,
+	5,  21,
+	6,  22,
+	7,  23,
+	8,  24,
+	9,  25,
+	10, 26,
+	11, 27,
+	12, 28,
+	13, 29,
+	14, 30,
+	15, 31
+};
+
+//=========================================//
 // data_n 数组内的数据说明:
 // - data_n[0] 时间戳整数部分(秒)
 // - data_n[1] 时间戳小数部分(微秒)
@@ -1089,6 +1135,31 @@ public:
 	~PointCloudReader() {}
 	void setPcapFile(std::string _fileName) { fileNamePcap = _fileName; }
 	void setCalibFile(std::string _fileName) { calibrationPath = _fileName; }
+	void setDataType(int data_type)
+	{
+		
+		switch(data_type)
+		{
+		case 0:
+			setCalibFile("../resource/VLP-16.xml");
+			scanID = vlp16_scanID;
+			break;
+    	case 1:
+        	setCalibFile("../resource/HDL-32.xml");
+			scanID = hdl32_scanID;
+			break;
+    	case 2:
+        	setCalibFile("../resource/VLP-32c.xml");
+			
+			for(int i=0; i<32; ++i)
+				vlp32_scanID[vlp32_map[i]] = i;
+
+			scanID = vlp32_scanID;
+			break;
+    	default:
+        	std::cout << "Data type error!" << std::endl;
+		}	
+	}
 	void setVoxelSize(float _voxelLeafsize) { voxelLeafsize = _voxelLeafsize; }
 	void setValidDistance(float value) { distanceControl = value; }
 	void init()
@@ -1144,8 +1215,9 @@ public:
 				double timestamp = frame.lines[n].pTimestamp[i] / 1e6; //秒为单位
 				pt.data_n[0] = int(timestamp);						   //整数部分为秒
 				pt.data_n[1] = timestamp - pt.data_n[0];			   //微秒
-				pt.data_n[2] = n;
+				pt.data_n[2] = scanID[n];
 				pt.data_n[3] = dist;
+				pt.curvature = dist;
 				_cloud->points.push_back(pt);
 			}
 		}
@@ -1165,6 +1237,7 @@ private:
 
 private:
 	//long long frameID;
+	std::vector<int> scanID;
 	std::string fileNamePcap;
 	std::string calibrationPath;
 	float distanceControl = 25.0;
@@ -1176,86 +1249,4 @@ private:
 	const int minPcapSize = 100;
 };
 
-class Synchrotimer
-{
-public:
-	void setStartFrameID(int value) { startFrameID = value;}
-	/**
-	 * 获取雷达帧(第一个点)的时间戳, 以秒为单位
-	 */
-	double getTime(PointCloud::Ptr frame)
-	{
-		return frame->points[0].data_n[0] + frame->points[0].data_n[1];
-	}
-
-	/**
-	 * 获取雷达帧(最后一个点)的时间戳, 以秒为单位
-	 */
-	double getEndTime(PointCloud::Ptr frame)
-	{
-		return frame->points.back().data_n[0] + frame->points.back().data_n[1];
-	}
-
-	/**
-	 * 使两个雷达帧的时间差小于半帧时间，纠正的是 pcap1 的 frameID
-	 * 有三种返回的结果:
-	 * [-1]: pcap2无效，跳过它
-	 * [ 0]: 已纠正pcap1的frameID何pcap2的frameOffset, 请重新读取
-	 * [ 1]: 无需纠正，可以合并  
-	 */
-	int correctFrameOffset(PointCloud::Ptr frame1,
-		PointCloud::Ptr frame2, long long &frameID, int &offset)
-	{
-		//202也可能掉帧，判断一下
-		float frameTime = getEndTime(frame2) - getTime(frame2);
-
-		if (frame2->points.size() < 8000 || frameTime > 0.06 || frameTime < 0.04)
-		{
-			std::cout << "Attention: 202可能存在掉帧或者数据不稳定情况!!!\n";
-			return -1; //不纠正
-		}
-
-		// 以第一个点时间戳作为当前帧时间戳
-		float timeOffset = getTime(frame2) - getTime(frame1);
-		frameTime = 0.05; //正确的时间差
-
-		//计算两个激光头之间的对应帧号差
-		int _a = timeOffset / frameTime;
-		// 让时间差位于半帧的时间之内
-		_a += 1.9 * (timeOffset - _a * frameTime) / frameTime;
-		offset -= _a;
-		std::cout << _a << std::endl;
-		if (abs(_a) > 0)
-		{
-			if (DEBUG)
-			{
-				std::cout << "======================offset============================\n"
-						  << "FrameID = " << frameID << "\t"
-						  << "Offset = " << -_a << "\t"
-						  << "Sumoffset = " << offset << "\t "
-						  << "Timeoffset  = " << timeOffset << std::endl;
-				//showTime(frame1, frameID, "202");
-				//showTime(frame2, reader2.frameNumber - skipFrameNumber, "201");
-				std::cout << "=============================================================\n";
-				if (abs(_a) > 1 && frameID - startFrameID > 5)
-				{
-					std::cout << "\nAttention: Frame2's timestamp is changing more than 0.25s!!!\n";
-					return -1;
-				}
-			}
-
-			if (frameID + offset < 3)
-			{
-				frameID += _a;
-				#if DEBUG
-				std::cout << "Change ID of frame1 to " << frameID << std::endl;
-				#endif
-			}
-			return 0;
-		}
-		return 1;
-	}
-private:
-	int startFrameID = 0;
-};
 #endif
