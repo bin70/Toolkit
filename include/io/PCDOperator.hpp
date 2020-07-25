@@ -5,8 +5,9 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <common.hpp>
+#include <algorithm>
 
-int frameid(std::string path)
+inline int frameid(std::string path)
 {
     int begin = path.rfind('/');
     int end = path.rfind('.');
@@ -14,8 +15,21 @@ int frameid(std::string path)
     return atoi(id_str.c_str());
 }
 
+
+inline void copyScanID(PointCloud::Ptr cloud, bool isVLP32 = true)
+{
+    // 把scanID和雷达头信息存入curvature以便显示
+    for(int i=0; i<cloud->points.size(); ++i)
+    {
+        if(isVLP32)
+            cloud->points[i].curvature = cloud->points[i].data_n[2];
+        else
+            cloud->points[i].curvature = cloud->points[i].data_n[2]+150;
+    }
+}
+
 // 指定一个保存的文件夹，将会以帧号命名，存下压缩的二进制PCD
-bool savePCD(PointCloud::Ptr &cloud, std::string save_dir, int frame_id)
+inline bool savePCD(PointCloud::Ptr &cloud, std::string save_dir, int frame_id)
 {
     // 建立文件夹
     char DirName[256];
@@ -50,6 +64,7 @@ class PCDReader
 public:
     PCDReader(std::string pcd_dir, int _data_columns = 8)
     {
+        std::cout << "Opening pcd dir" << std::endl;
         data_columns = _data_columns;
         openPCDDir(pcd_dir);
     }
@@ -82,8 +97,10 @@ private:
     
     void openPCDDir(std::string path)
     {
-        assert(CheckFileExist(path.c_str()) == true);
+        assert((access(path.c_str(), 0)) == 0);
         
+        std::cout << path << std::endl;
+
         DIR *dir = opendir(path.c_str());
         dirent *ptr;
         while ((ptr = readdir(dir)) != NULL)
@@ -97,10 +114,13 @@ private:
             pcd_files[frame_id] = filepath;
         }
         closedir(dir);
+
+        std::cout << "read pcd names finished." << std::endl;
     };
 
     bool readPCD(std::string file, PointCloud::Ptr &cloud)
     {
+        cloud->clear();
         std::ifstream fs(file.c_str());
         if (!fs.is_open() || fs.fail())
         {
