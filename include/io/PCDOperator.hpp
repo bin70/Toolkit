@@ -64,11 +64,18 @@ class PCDReader
 public:
     PCDReader(std::string pcd_dir, int _data_columns = 8)
     {
-        std::cout << "Opening pcd dir" << std::endl;
         data_columns = _data_columns;
         openPCDDir(pcd_dir);
     }
-    
+
+    PCDReader(std::string pcd_dir, bool _is_binary, int _data_columns = 8)
+    {
+        is_binary = _is_binary;
+        data_columns = _data_columns; 
+        openPCDDir(pcd_dir);
+    }
+
+    // 设置是否为二进制文件，默认false
     void setBinary(bool value){ is_binary = value; }
 
     bool readPointCloud(PointCloud::Ptr &cloud, int frame_id)
