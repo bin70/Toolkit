@@ -3,25 +3,12 @@
 #include <io/PCDOperator.hpp>
 #include <io/FileOperator.hpp>
 #include <visualization/ShowCloud.hpp>
+#include <point_cloud/PointCloudFilter.hpp>
+#include <point_cloud/Synchrotimer.hpp>
 #include <argparse.hpp>
 
 using namespace std;
 using namespace Eigen;
-
-string getCalibFile(int data_type)
-{
-    switch (data_type)
-    {
-    case 0:
-        return "../resource/VLP-16.xml";
-    case 1:
-        return "../resource/HDL-32.xml";
-    case 2:
-        return "../resource/VLP-32c.xml";
-    default:
-        cout << "Data type error!" << endl;
-    }
-}
 
 Matrix4d loadCalibMatrix()
 {
@@ -36,6 +23,7 @@ Matrix4d loadCalibMatrix()
 pcl::visualization::PCLVisualizer *viewer;
 bool is_show = false;
 float resolution = 0.03;
+float limit_distance = 25.0;
 int begin_id = 0;
 int end_id = -1;
 FileOperator fop;
@@ -47,6 +35,8 @@ int main(int argc, const char **argv)
     parser.addArgument("-d", "--data_type", true);
     parser.addArgument("-g", "--gap_of_frame", true);
     parser.addArgument("-o", "--out_dir", true);
+    parser.addArgument("-l", "--limit_distance");
+    parser.addArgument("-f", "--filter_cloud"); // 是否对点云进行滤波
     parser.addArgument("-m", "--pcap2"); //可选双头
     parser.addArgument("-b", "--begin_id");
     parser.addArgument("-e", "--end_id");
@@ -72,9 +62,9 @@ int main(int argc, const char **argv)
 
     PointCloudReader reader;
     reader.setPcapFile(parser.get("pcap"));
-    reader.setCalibFile(getCalibFile(parser.get<int>("data_type")));
-    reader.setVoxelSize(0.03); // 单帧分辨率
-    reader.setValidDistance(25.0);
+    reader.setDataType(parser.get<int>("data_type"));
+    reader.setVoxelSize(resolution); // 单帧分辨率
+    reader.setValidDistance(limit_distance);
     reader.init();
 
     PointCloudReader reader2;
@@ -83,9 +73,9 @@ int main(int argc, const char **argv)
     if(parser.count("pcap2"))
     {
         reader2.setPcapFile(parser.get("pcap2"));
-        reader2.setCalibFile(getCalibFile(0)); // 第二个雷达一定是16线
-        reader2.setVoxelSize(0.03); // 单帧分辨率
-        reader2.setValidDistance(25.0);
+        reader2.setDataType(0); // 第二个雷达一定是16线
+        reader2.setVoxelSize(resolution); // 单帧分辨率
+        reader2.setValidDistance(limit_distance);
         reader2.init();
 
         sync.setStartFrameID(begin_id);
@@ -101,6 +91,15 @@ int main(int argc, const char **argv)
 
     while (reader.readPointCloud(cloud, frameID))
     {
+        if(parser.count("filter_cloud"))
+        {
+            PointCloudFilter pcf;
+            pcf.setOutlierFilter();
+            pcf.filter(cloud, cloud);
+        }
+
+        copyScanID(cloud);
+        
         // 使用双头的数据建图
         if(parser.count("pcap2"))
         {
@@ -109,6 +108,15 @@ int main(int argc, const char **argv)
                 cout << "pcap2 is end!" << endl;
                 break;
             }
+
+            if(parser.count("filter_cloud"))
+            {
+                PointCloudFilter pcf;
+                pcf.setOutlierFilter();
+                pcf.filter(cloud2, cloud2);
+            }
+
+            copyScanID(cloud2, false);
             
             switch(sync.correctFrameOffset(cloud, cloud2, frameID, frameOffset))
             {
@@ -135,8 +143,10 @@ int main(int argc, const char **argv)
             pcl::transformPointCloud(*cloud, *cloud, calibMatrix);
 
         if (is_show)
+        {
+            vis_utils::showText(viewer, to_string(frameID), "frameID");
             vis_utils::ShowCloud(cloud, viewer, "intensity", 3);
-
+        }
         savePCD(cloud, out_dir, frameID);
         
         // 间隔几帧

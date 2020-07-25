@@ -8,6 +8,7 @@
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <visualization/ShowCloud.hpp>
+#include <velodyne/LidarConfig.hpp>
 
 using namespace std;
 using namespace Eigen;
@@ -20,21 +21,7 @@ float resolution = 0.03;
 PCLVisualizer *viewer;
 
 // vlp32的配置
-int _nScanRings = 32;
-float _upperBound = 15.0;
-float _lowerBound = -25.0;
-
-int getLOAMScanID(PointType &p)
-{
-    PointType point;
-    point.x = p.y;
-    point.y = p.z;
-    point.z = p.x;
-    
-    float _factor = (_nScanRings - 1) / (_upperBound - _lowerBound);
-    float angle = std::atan(point.y / std::sqrt(point.x * point.x + point.z * point.z));
-    return int(((angle * 180 / M_PI) - _lowerBound) * _factor + 0.5);;
-}
+LidarConfig lidar_config(32, 15.0, -25.0);
 
 int main(int argc, const char** argv)
 {
@@ -59,19 +46,33 @@ int main(int argc, const char** argv)
     if(parser.count("resolution"))
         resolution = parser.get<float>("resolution");
 
-    PCDReader reader(input_dir+"/PCD");
+    string pcd_dir = input_dir+"/PCD";
+    string traj_path = input_dir+"/traj_with_timestamp.txt";
+    TrajType traj_type = (TrajType)parser.get<int>("traj_type");
+
+    std::cout << "================ runing information ===============\n" << std::endl
+              << "\tpcd directory = " << pcd_dir << std::endl
+              << "\ttraj_path = " << traj_path << std::endl
+              << "\ttraj_type = " << traj_type << std::endl;
+
+    PCDReader reader(pcd_dir);
     reader.setBinary(true);
     
-    TrajIO traj(input_dir+"/traj_with_timestamp.txt", 
-                (TrajType)parser.get<int>("traj_type"));
+    TrajIO traj(traj_path, traj_type);
+
     // 不指定建图范围的话，直接用轨迹中的ID建图
     int begin_id = traj.getStartID();
     int end_id = traj.getEndID();
+
     if(parser.count("begin_id"))
         begin_id =parser.get<int>("begin_id");
     if(parser.count("end_id"))
         end_id = parser.get<int>("end_id");
     traj.checkID(begin_id, end_id);
+    
+    std::cout << "\tbegin_id = "  << begin_id << std::endl
+              << "\tend_id = " << end_id << std::endl
+              << "=====================================================" << std::endl;
 
     PointCloud::Ptr cloud(new PointCloud);
     int frame_id = begin_id;
@@ -87,22 +88,7 @@ int main(int argc, const char** argv)
         PointCloud::Ptr cloud_filtered(new PointCloud);
         
         #if RANGE_LIMIT
-        // 范围滤波器
-        pcl::ConditionalRemoval<PointType> cond_removal;
-        PointType minP, maxP;
-        pcl::getMinMax3D<PointType>(*cloud, minP, maxP);
-        pcl::ConditionAnd<PointType>::Ptr cond(new pcl::ConditionAnd<PointType>());
-        // x,y 只取15米距离
-        cond->addComparison(pcl::FieldComparison<PointType>::ConstPtr(new pcl::FieldComparison<PointType>("x", pcl::ComparisonOps::GT, (minP.x+maxP.x)/2-15.0 )));
-        cond->addComparison(pcl::FieldComparison<PointType>::ConstPtr(new pcl::FieldComparison<PointType>("x", pcl::ComparisonOps::LT, (minP.x+maxP.x)/2+15.0 )));
-        cond->addComparison(pcl::FieldComparison<PointType>::ConstPtr(new pcl::FieldComparison<PointType>("y", pcl::ComparisonOps::GT, (minP.y+maxP.y)/2-15.0 )));
-        cond->addComparison(pcl::FieldComparison<PointType>::ConstPtr(new pcl::FieldComparison<PointType>("y", pcl::ComparisonOps::LT, (minP.y+maxP.y)/2+15.0 )));
-        // z轴只取(-1.0, 5.0)米的范围
-        cond->addComparison(pcl::FieldComparison<PointType>::ConstPtr(new pcl::FieldComparison<PointType>("z", pcl::ComparisonOps::GT, -2.0 ))); 
-        cond->addComparison(pcl::FieldComparison<PointType>::ConstPtr(new pcl::FieldComparison<PointType>("z", pcl::ComparisonOps::LT, 6.0 )));
-        cond_removal.setCondition(cond);
-        cond_removal.setInputCloud(cloud);
-        cond_removal.filter(*cloud_filtered);
+        
         #else
             pcl::copyPointCloud(*cloud, *cloud_filtered);
         #endif
@@ -118,7 +104,7 @@ int main(int argc, const char** argv)
         for(int i=0; i<cloud->points.size(); ++i)
         {
             PointType &p =  cloud->points[i];
-            p.curvature = getLOAMScanID(p);
+            p.curvature = lidar_config.getScanID(p);
         }
 
         Matrix4d m = traj.getPoseMatrix(frame_id);
