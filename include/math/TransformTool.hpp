@@ -56,7 +56,9 @@ public:
 
     Vector6d matrix2euler(Matrix4d &m)
     {
-
+        Vector6d e = m2e(m);
+        Matrix4d m2 = euler2matrix(e);
+        return m2e(m2);
     }
 
     Matrix4d tq2matrix(Vector7d &tq)
@@ -76,5 +78,18 @@ public:
     Vector6d tq2euler(Vector7d &tq)
     {
         
+    }
+
+    Vector6d m2e(Eigen::Matrix4d m)
+    {
+        Vector6d e;
+        // rotation
+        e[0] = atan2(m(0, 2), m(2, 2));
+        e[1] = asin(-m(1, 2));
+        e[2] = atan2(m(1, 0), m(1, 1));
+
+        // translation
+        for (int i = 0; i < 3; ++i)
+            e[3 + i] = m(i, 3);
     }
 };
