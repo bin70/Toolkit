@@ -360,7 +360,12 @@ public:
     }
 
     String get(const String& name){
-        return retrieve<String>(name);
+        String str = retrieve<String>(name);
+        if(str.empty())
+        {
+            std::cout << "param: " << name << "is empty! Please check out whether have called parse()." << std::endl;
+        }
+        return str;
     }
 
     template <typename T>
