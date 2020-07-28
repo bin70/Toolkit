@@ -1,5 +1,7 @@
 #pragma once
 #include <common.hpp>
+#include <point_cloud/common.h>
+#include <point_cloud/common.h>
 #include <pcl/common/transforms.h>
 #include <pcl/common/common.h>
 #include <pcl/filters/filter.h>

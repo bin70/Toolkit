@@ -1,5 +1,7 @@
 #pragma once 
 #include <common.hpp>
+#include <io/FileOperator.hpp>
+#include <point_cloud/common.h>
 #include <velodyne/LidarConfig.hpp>
 
 double frametime(std::string path)
@@ -13,6 +15,7 @@ double frametime(std::string path)
 class ROSPCDReader
 {
 public:
+    FileOperator fop;
     std::vector<std::string> pcd_files;
     LidarType lidar;
     float validDistance;
@@ -42,7 +45,7 @@ public:
 
     void openPCDDir(std::string path)
     {
-        assert(CheckFileExist(path.c_str()) == true);
+        assert( fop.isExist(path) );
         
         switch (lidar)
         {

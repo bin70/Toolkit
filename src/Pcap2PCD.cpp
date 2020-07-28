@@ -6,19 +6,10 @@
 #include <point_cloud/PointCloudFilter.hpp>
 #include <point_cloud/Synchrotimer.hpp>
 #include <argparse.hpp>
+#include <velodyne/PointCloudReader.hpp>
 
 using namespace std;
 using namespace Eigen;
-
-Matrix4d loadCalibMatrix()
-{
-    ifstream matrix_file("../resource/autoCalibMatrix.txt");
-    Matrix4d matrix;
-    for(int i=0; i<4; ++i)
-        for(int j=0; j<4; ++j)
-            matrix_file >> matrix(i,j);
-    return matrix;
-}
 
 pcl::visualization::PCLVisualizer *viewer;
 bool is_show = false;
@@ -45,7 +36,7 @@ int main(int argc, const char **argv)
     parser.addArgument("-c", "--calib_matrix"); //是否使用一个初始的标定矩阵变换雷达帧（斜装头建图时才用到）
     parser.parse(argc, argv);
 
-    string out_dir = parser.get("out_dir") + "/" + getFileName(parser.get("pcap"));
+    string out_dir = parser.get("out_dir") + "/" + fop.getFileName(parser.get("pcap"));
     if(parser.count("begin_id"))
         begin_id = parser.get<int>("begin_id");
     if(parser.count("end_id"))
@@ -87,7 +78,7 @@ int main(int argc, const char **argv)
     consoleProgress(0);
 
     // 把201标定到202上的矩阵
-    Matrix4d calibMatrix = loadCalibMatrix();
+    Matrix4d calibMatrix = fop.loadMatrix("../resource/autoCalibMatrix.txt"); 
 
     while (reader.readPointCloud(cloud, frameID))
     {

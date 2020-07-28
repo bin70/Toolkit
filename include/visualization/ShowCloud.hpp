@@ -1,4 +1,5 @@
 #include <common.hpp>
+#include <point_cloud/common.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
 namespace vis_utils

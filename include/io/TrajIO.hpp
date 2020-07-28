@@ -4,74 +4,12 @@
 #include <iomanip>
 #include <map>
 #include <common.hpp>
+#include <point_cloud/common.h>
 #include <math/TransformTool.hpp>
+#include <io/FileOperator.hpp>
 
 enum TrajType{
     ROS_LOAM, G2OT, G2O, KITTI
-};
-
-class TrajIOKITTI
-{
-public:
-    TrajIOKITTI(std::string traj_path, int begin_id = 0, int end_id = -1)
-    {
-        assert( CheckFileExist(traj_path.c_str()) == true );
-        traj_file_.open(traj_path.c_str());
-        pose_id = begin_id;
-
-        while(readPoseKITTI()) ;
-    }
-
-    bool readPoseKITTI()
-    {
-        if(traj_file_.eof()) return false;
-        
-        std::string line;
-        std::vector<std::string> st;
-
-        getline(traj_file_, line);
-        if(line.empty()) return false;
-
-        boost::trim(line);
-        boost::split(st, line, boost::is_any_of("\r\t "), boost::token_compress_on);
-
-        if(st.size() != 12)
-        {
-            std::cout << "轨迹格式有问题" << std::endl;
-            return false;
-        }
-        
-        Eigen::Matrix4d tf = Eigen::Matrix4d::Identity();
-   
-        for(int row=0; row<3; ++row)
-            for(int col=0; col<4; ++col)
-                tf(row, col) = (double)atof(st[row*4+col].c_str());
-        
-
-        // for(int i=0; i<4; ++i)
-        // {
-        //     for(int j=0; j<4; ++j)
-        //         std::cout << tf(i,j) << " ";
-        //     std::cout << std::endl;
-        // }
-
-        traj.push_back(tf);
-        pose_id_list.push_back(pose_id);
-        pose_id++;
-        return true;
-    }
-
-    Eigen::Matrix4d getPose(int id)
-    {
-        assert(id>=0 && id<traj.size());
-        return traj[id];
-    }
-
-private:
-    int pose_id;
-    std::ifstream traj_file_;
-    std::vector<Eigen::Matrix4d> traj;
-    std::vector<int> pose_id_list;
 };
 
 class PoseNode
@@ -110,10 +48,10 @@ public:
     :   startID(-1),
         endID(-1),
         frameGap(0),
-        data_name(getFileName(traj_path)),
+        data_name(fop.getFileName(traj_path)),
         pose_cnt(0)
     {
-        assert( CheckFileExist(traj_path.c_str()) == true );
+        assert( fop.isExist(traj_path) );
         traj_file_.open(traj_path.c_str());
 
         if(type != KITTI && type != G2O)
@@ -175,7 +113,7 @@ public:
 
     void writeToFile(std::string out_file)
     {
-        assert( CheckFileExist(out_file.c_str()) == true);
+        assert( fop.isExist(out_file) );
         
         std::ofstream out(out_file);
         if(!out.is_open() || out.fail())
@@ -376,5 +314,6 @@ private:
     PoseNode curPose;
     std::fstream traj_file_;
     std::string data_name;
+    FileOperator fop;
 
 };

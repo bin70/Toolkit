@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <common.hpp>
+#include <point_cloud/common.h>
 #include <algorithm>
 
 inline int frameid(std::string path)
