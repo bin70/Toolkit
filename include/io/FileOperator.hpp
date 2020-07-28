@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <fstream>
 #include <eigen3/Eigen/Dense>
 
 class FileOperator{
@@ -33,20 +34,40 @@ public:
         return CheckFileExist(path.c_str());
     }
 
+    std::vector<string> openDir(string path)
+    {
+        assert( isExist(path) );
+
+        std::vector<string> filelist;
+
+        DIR *dir = opendir(path.c_str());
+        dirent *ptr;
+        while ((ptr = readdir(dir)) != NULL)
+        {
+            if (ptr->d_name[0] == '.') continue;
+            
+            string filename = string(ptr->d_name);
+            // 文件名添加到列表
+            filelist.push_back(path + "/" + filename);
+        }
+        closedir(dir);
+        return filelist;
+    }
+
     std::string getFileName(std::string path)
     {
         std::string fullName = path.substr(path.rfind('/') + 1);
         return fullName.substr(0, fullName.find('.'));
     }
 
-    Matrix loadMatrix(string path)
+    Matrix loadMatrix(std::string path)
     {
         if(access(path.c_str(), 0) != 0) perror("load matrix error: ");
-        std::ifstream f(path);
+        std::ifstream fmatrix(path.c_str());
         Matrix m;
         for(int i=0; i<4; ++i)
             for(int j=0; j<4; ++j)
-                f >> m(i, j);
+                fmatrix >> m(i, j);
         return m;
     }
 
