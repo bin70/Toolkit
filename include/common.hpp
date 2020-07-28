@@ -40,9 +40,8 @@ inline void consoleProgress(int progress)
 
     int st = progress / 2;
     for (int i = 0; i < st; i++)
-    {
         bar[i] = '#';
-    }
+
     bar[st] = 0;
 
     printf("[%-50s][%d%%][%c]\r", bar, progress, lable[progress % 4]);
@@ -51,9 +50,7 @@ inline void consoleProgress(int progress)
     inprogress = progress;
 
     if (progress == 100)
-    {
         printf("\n");
-    }
 }
 
 inline void consoleProgress(int progress, int begin, int end)

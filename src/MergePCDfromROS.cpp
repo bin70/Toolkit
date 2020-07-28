@@ -1,11 +1,12 @@
+#include <argparse.hpp>
 #include <pcl/common/transforms.h>
+
 #include <io/PCDOperator.hpp>
-#include <io/FileOperator.hpp>
-#include <visualization/ShowCloud.hpp>
+#include <io/ROSPCDOperator.hpp>
 #include <point_cloud/PointCloudFilter.hpp>
 #include <point_cloud/Synchrotimer.hpp>
-#include <argparse.hpp>
-#include <point_cloud/ROSPCDOperator.hpp>
+#include <visualization/ShowCloud.hpp>
+
 
 using namespace std;
 using namespace Eigen;
@@ -18,16 +19,6 @@ using namespace Eigen;
  * - 离线建图程序所需格式的PCD
  * - XYZ, intensity存scanID, curvature存distance
  *****************************************/
-
-Matrix4d loadCalibMatrix()
-{
-    ifstream matrix_file("../resource/autoCalibMatrix.txt");
-    Matrix4d matrix;
-    for(int i=0; i<4; ++i)
-        for(int j=0; j<4; ++j)
-            matrix_file >> matrix(i,j);
-    return matrix;
-}
 
 pcl::visualization::PCLVisualizer *viewer;
 bool is_show = false;
@@ -105,7 +96,7 @@ int main(int argc, const char **argv)
     consoleProgress(0);
 
     // 把201标定到202上的矩阵
-    Matrix4d calibMatrix = loadCalibMatrix();
+    Matrix4d calibMatrix = fop.loadMatrix("../resource/autoCalibMatrix.txt");
 
     while (reader.readPointCloud(cloud, frameID))
     {
