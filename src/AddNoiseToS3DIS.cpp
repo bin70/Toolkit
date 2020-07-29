@@ -51,8 +51,15 @@ int main(int argc, const char **argv)
         reader.read<pcl::PointXYZI>(filelist[i], cloud);
         cout << "prossing " << filelist[i] << endl;
         addNoise(cloud, parser.get<float>("mu"), parser.get<float>("sigma"));
-        writer.write<pcl::PointXYZI>(
-            output+"/"+fop.getFileName(filelist[i])+".ply", cloud);
+        
+        // ascii格式的RandLA-Net的脚本无法处理
+        // writer.write<pcl::PointXYZI>(output+"/"+fop.getFileName(filelist[i])+".ply", cloud);
+        
+        // 存为二进制
+        pcl::PCLPointCloud2 cloud2;
+        pcl::toPCLPointCloud2(cloud, cloud2);
+        writer.writeBinary(output+"/"+fop.getFileName(filelist[i])+".ply", cloud2, 
+            Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), false); // 不使用相机
     }
     
     return 0;
