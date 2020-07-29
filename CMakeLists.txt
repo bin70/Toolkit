@@ -35,3 +35,6 @@ target_link_libraries(mapBuilder ${PCL_LIBRARIES})
 add_executable(txt2Las src/Txt2Las.cpp)
 target_link_libraries(txt2Las ${PCL_LIBRARIES})
 
+add_executable(addNoise src/AddNoiseToS3DIS.cpp)
+target_link_libraries(addNoise ${PCL_LIBRARIES})
+
