@@ -32,6 +32,9 @@ target_link_libraries(testTransform ${catkin_LIBRARIES})
 add_executable(mapBuilder src/MapBuilderPCD.cpp)
 target_link_libraries(mapBuilder ${PCL_LIBRARIES})
 
+add_executable(offlineEvaluate src/offlineEvaluate.cpp)
+target_link_libraries(offlineEvaluate ${PCL_LIBRARIES})
+
 add_executable(txt2Las src/Txt2Las.cpp)
 target_link_libraries(txt2Las ${PCL_LIBRARIES})
 
