@@ -1,57 +1,56 @@
+#pragma once
 #include <common.hpp>
 #include <point_cloud/common.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-namespace vis_utils
+class ShowUtils
 {
-    bool isPause = true;
+private:    
+    bool inited = false;
+    pcl::visualization::PCLVisualizer* viewer;
+    typedef void (*KeyboardEventFunc)(const pcl::visualization::KeyboardEvent &, void*);
+    
+public:
 
-    void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event,
-                               void *nothing)
+
+    ShowUtils(){}
+    //ShowUtils(std::string show_name) { init(show_name); }
+    void checkInited() //防止可视化类未分配空间
     {
-        if (event.getKeySym() == "space" && event.keyDown())
-            isPause = false;
+        if(!inited)
+        {
+            std::cout << "ShowUtils is not be inited!" << std::endl;
+            exit(-1);
+        }
     }
 
-    void waitForSpace(pcl::visualization::PCLVisualizer *viewer)
+    void init(std::string name, KeyboardEventFunc func)
     {
+        viewer = new pcl::visualization::PCLVisualizer(name);
+        viewer->registerKeyboardCallback(func, (void*)NULL);
+        inited = true; 
+    }
+
+    pcl::visualization::PCLVisualizer* getViewer() { return viewer; }
+
+    void waitForSpace(bool &isPause)
+    {
+        checkInited();
         isPause = true;
         while (isPause)
             viewer->spinOnce();
     }
-
-    //以强度信息作为颜色显示点云
-    inline void ShowCloud(const PointCloud::Ptr cloud,
-                          pcl::visualization::PCLVisualizer *viewer,
-                          std::string color_field = "intensity",
-                          int size_of_point = 1)
+    
+    inline void
+    ShowCloud(const pcl::PointCloud<PointType>::Ptr cloud,
+              std::string cloud_id = "cloud", std::string show_field = "intensity")
     {
-        std::string cloud_id = "cloud_" + color_field;
+        checkInited();
         if (viewer->contains(cloud_id))
             viewer->removePointCloud(cloud_id);
 
         //从电云intensity字段生成颜色信息
-        pcl::visualization::PointCloudColorHandlerGenericField<PointType> cloud_handle(cloud, color_field);
-        //viewer->setBackgroundColor(255, 255, 255);
-        viewer->setBackgroundColor(0, 0, 0);
-        viewer->addPointCloud(cloud, cloud_handle, cloud_id);
-        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, size_of_point, cloud_id);
-        viewer->spinOnce();
-    }
-
-    inline void ShowCloud(const PointCloud::Ptr cloud,
-                          pcl::visualization::PCLVisualizer *viewer,
-                          int r, int g, int b)
-    {
-        std::stringstream ss;
-        ss << "cloud_" << r << g << b;
-        std::string cloud_id = ss.str();
-        if (viewer->contains(cloud_id))
-        {
-            viewer->removePointCloud(cloud_id);
-        }
-
-        pcl::visualization::PointCloudColorHandlerCustom<PointType> cloud_handle(cloud, r, g, b);
+        pcl::visualization::PointCloudColorHandlerGenericField<PointType> cloud_handle(cloud, show_field);
         viewer->addPointCloud(cloud, cloud_handle, cloud_id);
         viewer->spinOnce();
     }
@@ -74,4 +73,4 @@ namespace vis_utils
             display_size, display_id);
         viewer->spinOnce();
     }
-} // namespace vis_utils
+};
