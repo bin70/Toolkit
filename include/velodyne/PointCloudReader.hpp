@@ -77,7 +77,7 @@ public:
 
 		if (!reader.capture(frame, _frameID))
 		{
-			std::cout << "Read frame " << _frameID << "from []" << fileNamePcap << " failed." << std::endl;
+			std::cout << "Read frame " << _frameID << "from [ " << fileNamePcap << "] failed." << std::endl;
 			return false;
 		}
 
