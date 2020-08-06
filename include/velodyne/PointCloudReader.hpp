@@ -42,6 +42,7 @@ public:
         	std::cout << "Data type error!" << std::endl;
 		}	
 	}
+	void setScanGap(int value) {  scanGap = value;}
 	void setVoxelSize(float _voxelLeafsize) { voxelLeafsize = _voxelLeafsize; }
 	void setValidDistance(float value) { distanceControl = value; }
 	void init()
@@ -97,7 +98,7 @@ public:
 				double timestamp = frame.lines[n].pTimestamp[i] / 1e6; //秒为单位
 				pt.data_n[0] = int(timestamp);						   //整数部分为秒
 				pt.data_n[1] = timestamp - pt.data_n[0];			   //微秒
-				pt.data_n[2] = scanID[n];
+				pt.data_n[2] = scanID[n] + scanGap;
 				pt.data_n[3] = dist;
 				pt.curvature = dist;
 				_cloud->points.push_back(pt);
@@ -124,6 +125,8 @@ private:
 	std::string calibrationPath;
 	float distanceControl = 25.0;
 	float voxelLeafsize;
+
+	int scanGap = 0;
 
 	FileOperator fop;
 	pcapReader reader;
