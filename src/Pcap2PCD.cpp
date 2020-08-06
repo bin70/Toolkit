@@ -65,6 +65,7 @@ int main(int argc, const char **argv)
     {
         reader2.setPcapFile(parser.get("pcap2"));
         reader2.setDataType(0); // 第二个雷达一定是16线
+        reader2.setScanGap(32); // 双头建图时，201一定是32线
         reader2.setVoxelSize(resolution); // 单帧分辨率
         reader2.setValidDistance(limit_distance);
         reader2.init();
