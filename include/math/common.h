@@ -1,11 +1,10 @@
 #pragma once
 #include <cmath>
+// eigen
+#include <Eigen/Dense>
 
 inline double r2d(double rad)
 {
-    //double Rad_to_deg = 45.0 / atan(1.0);
-    
-    //return rad * Rad_to_deg;
     return rad*180.0/M_PI;
 }
 
