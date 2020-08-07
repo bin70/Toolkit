@@ -16,27 +16,25 @@ class PointCloudReader
 public:
 	PointCloudReader() : inited(false) {}
 	~PointCloudReader() {}
+	int getScanNum(){return nScans;}
 	void setPcapFile(std::string _fileName) { fileNamePcap = _fileName; }
 	void setCalibFile(std::string _fileName) { calibrationPath = _fileName; }
 	void setDataType(int data_type)
 	{
+		LidarConfig lidar(data_type);
+		scanID = lidar.getScanIDList();
+		nScans = lidar.getScanNum();
+
 		switch(data_type)
 		{
 		case 0:
 			setCalibFile("../resource/VLP-16.xml");
-			scanID = vlp16_scanID;
 			break;
     	case 1:
         	setCalibFile("../resource/HDL-32.xml");
-			scanID = hdl32_scanID;
 			break;
     	case 2:
         	setCalibFile("../resource/VLP-32c.xml");
-			
-			for(int i=0; i<32; ++i)
-				vlp32_scanID[vlp32_map[i]] = i;
-
-			scanID = vlp32_scanID;
 			break;
     	default:
         	std::cout << "Data type error!" << std::endl;
@@ -119,7 +117,7 @@ private:
 	}
 
 private:
-	//long long frameID;
+	int nScans;
 	std::vector<int> scanID;
 	std::string fileNamePcap;
 	std::string calibrationPath;
