@@ -3,15 +3,28 @@
 #include <point_cloud/common.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
+class ShowUtilsHelper
+{
+public:
+    
+};
+
 class ShowUtils
 {
 private:    
     bool inited = false;
     pcl::visualization::PCLVisualizer* viewer;
     typedef void (*KeyboardEventFunc)(const pcl::visualization::KeyboardEvent &, void*);
-    
-public:
 
+public:
+    static bool isPause;
+    // 继续执行view
+
+    static void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void* nothing){
+        if(event.getKeySym() == "space" && event.keyDown()){
+            isPause = false;
+        }
+    }
 
     ShowUtils(){}
     //ShowUtils(std::string show_name) { init(show_name); }
@@ -24,11 +37,21 @@ public:
         }
     }
 
+
+
     void init(std::string name, KeyboardEventFunc func)
     {
         viewer = new pcl::visualization::PCLVisualizer(name);
         viewer->registerKeyboardCallback(func, (void*)NULL);
         inited = true; 
+    }
+
+    void waitForSpace()
+    {
+        checkInited();
+        isPause = true;
+        while (isPause)
+            viewer->spinOnce();
     }
 
     pcl::visualization::PCLVisualizer* getViewer() { return viewer; }
