@@ -46,6 +46,14 @@ public:
         inited = true; 
     }
 
+    void init(std::string name, KeyboardEventFunc func, bool *_isPause)
+    {
+        viewer = new pcl::visualization::PCLVisualizer(name);
+        viewer->registerKeyboardCallback(func, (void*)NULL);
+        *_isPause = true; 
+        inited = true; 
+    }
+
     void waitForSpace()
     {
         checkInited();

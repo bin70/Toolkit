@@ -2,6 +2,33 @@
 #include <iostream>
 #include <vector>
 
+inline void consoleProgress(int progress)
+{
+    static char bar[102] = {0};
+    static std::string lable = "|/-\\";
+    static int inprogress = -1;
+    if (inprogress == progress)
+        return;
+
+    int st = progress / 2;
+    for (int i = 0; i < st; i++)
+        bar[i] = '#';
+
+    bar[st] = 0;
+
+    printf("[%-50s][%d%%][%c]\r", bar, progress, lable[progress % 4]);
+    fflush(stdout);
+
+    inprogress = progress;
+
+    if (progress == 100) printf("\n");
+}
+
+inline void consoleProgress(int progress, int begin, int end)
+{
+    consoleProgress(100. * (progress - begin) / (end - begin));
+}
+
 // 画一条固定长度的分割线(强迫症福利)
 inline void pLine()
 {

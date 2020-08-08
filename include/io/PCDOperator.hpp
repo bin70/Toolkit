@@ -79,6 +79,25 @@ public:
     // 设置是否为二进制文件，默认false
     void setBinary(bool value){ is_binary = value; }
 
+    template <typename PCD_TYPE>
+    bool readPointCloud(PointCloud::Ptr &cloud, int frame_id)
+    {
+        pcl::PointCloud<PCD_TYPE> temp_cloud;
+        cloud->clear();
+
+        if (pcd_files.count(frame_id) > 0
+            && fop.isExist(pcd_files[frame_id]))
+        {
+            if(pcl::io::loadPCDFile(pcd_files[frame_id], temp_cloud) != -1)
+            {
+                pcl::copyPointCloud(temp_cloud, *cloud);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     bool readPointCloud(PointCloud::Ptr &cloud, int frame_id)
     {
         if (pcd_files.count(frame_id) > 0)
@@ -98,9 +117,11 @@ private:
         return v;
     }
 
-    bool is_binary = false;
+    bool is_binary = true;
     int data_columns;
     std::map<int, std::string> pcd_files;
+    FileOperator fop;
+
     inline float norm(PointType &p){ return std::sqrt(p.x*p.x + p.y*p.y + p.z*p.z);}
     
     void openPCDDir(std::string path)
