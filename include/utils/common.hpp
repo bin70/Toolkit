@@ -21,5 +21,3 @@ inline void printParam(const std::string &header,
     
     pLine();
 }
-
-#endif
