@@ -2,7 +2,7 @@
 #include <utils/argparse.hpp>
 #include <io/TrajIO.hpp>
 #include <io/PCDOperator.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 #include <build_map/MapManager.hpp>
 #include <visualization/ShowCloud.hpp>
 

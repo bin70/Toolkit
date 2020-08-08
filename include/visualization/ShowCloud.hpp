@@ -1,6 +1,6 @@
 #pragma once
 #include <common.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
 
 class ShowUtilsHelper

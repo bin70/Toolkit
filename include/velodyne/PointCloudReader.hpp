@@ -1,5 +1,5 @@
 #pragma once
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 #include <io/FileOperator.hpp>
 #include <io/PcapReader.hpp>
 #include <velodyne/LidarConfig.hpp>

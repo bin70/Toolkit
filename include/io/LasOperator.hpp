@@ -2,7 +2,7 @@
 #define _LAS_FILE_READER_
 
 #include <common.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 #pragma pack(push,1)
 
 /*===================================================================

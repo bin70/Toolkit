@@ -1,7 +1,7 @@
 #pragma once 
 #include <common.hpp>
 #include <io/FileOperator.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 #include <velodyne/LidarConfig.hpp>
 
 double frametime(std::string path)

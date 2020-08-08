@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <map>
 #include <common.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 #include <math/TransformTool.hpp>
 #include <io/FileOperator.hpp>
 

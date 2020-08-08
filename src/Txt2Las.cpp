@@ -2,7 +2,7 @@
 #include <io/FileOperator.hpp>
 #include <io/PCDOperator.hpp>
 #include <io/LasOperator.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 
 using namespace std;
 FileOperator fop;

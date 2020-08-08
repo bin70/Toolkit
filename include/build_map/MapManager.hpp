@@ -6,7 +6,7 @@
 #include <pcl/octree/octree_search.h>
 #include <pcl/filters/voxel_grid.h>
 #include <common.hpp>
-#include <point_cloud/common.h>
+#include <point_cloud/common.hpp>
 
 typedef pcl::octree::OctreePointCloudSearch<PointType> OctreePointCloudSearch;
 typedef OctreePointCloudSearch::Ptr OctreePtr;
