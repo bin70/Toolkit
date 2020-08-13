@@ -4,14 +4,13 @@
 #include <io/PCDOperator.hpp>
 #include <point_cloud/common.hpp>
 #include <build_map/MapManager.hpp>
-#include <visualization/ShowCloud.hpp>
+#include <visualization/ShowUtils.hpp>
 
 using namespace std;
-using namespace vis_utils;
-using namespace pcl::visualization;
 
-PCLVisualizer *viewer;
 FileOperator fop;
+ShowUtils su;
+bool ShowUtils::isPause = true;
 bool show_cloud = false;
 float resolution = 0.03;
 
@@ -58,8 +57,7 @@ int main(int argc, const char **argv)
     if(parser.count("show_cloud"))
     {
         show_cloud = parser.get<bool>("show_cloud");
-        viewer = new PCLVisualizer("Keypoints");
-        viewer->registerKeyboardCallback(&keyboardEventOccurred, (void*)NULL);
+        su.init("Test Cloud", &ShowUtils::keyboardEvent);
     }
 
     string input_dir = parser.get("input_dir");
@@ -81,8 +79,9 @@ int main(int argc, const char **argv)
 
     MapManager map(resolution);
     map.UpdateMap(test_cloud);
-    ShowCloud(map.getMapPtr(), viewer);
-    waitForSpace(viewer);
+
+    su.ShowCloud(map.getMapPtr());
+    su.waitSpace();
 
     PointType pointSel;
     PointCloud::Ptr correspond(new PointCloud);

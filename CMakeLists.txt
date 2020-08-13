@@ -23,9 +23,6 @@ include_directories(include)
 add_executable(pcap2PCD src/Pcap2PCD.cpp)
 target_link_libraries(pcap2PCD ${PCL_LIBRARIES} -lpcap)
 
-add_executable(mergeROSPCD src/MergePCDfromROS.cpp)
-target_link_libraries(mergeROSPCD ${PCL_LIBRARIES})
-
 add_executable(testTransform src/TestTransform.cpp)
 target_link_libraries(testTransform ${catkin_LIBRARIES})
 

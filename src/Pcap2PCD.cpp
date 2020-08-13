@@ -2,7 +2,7 @@
 #include <io/PcapReader.hpp>
 #include <io/PCDOperator.hpp>
 #include <io/FileOperator.hpp>
-#include <visualization/ShowCloud.hpp>
+#include <visualization/ShowUtils.hpp>
 #include <point_cloud/PointCloudFilter.hpp>
 #include <point_cloud/Synchrotimer.hpp>
 #include <utils/argparse.hpp>
@@ -11,13 +11,14 @@
 using namespace std;
 using namespace Eigen;
 
-pcl::visualization::PCLVisualizer *viewer;
 bool is_show = false;
 float resolution = 0.03;
 float limit_distance = 25.0;
 int begin_id = 0;
 int end_id = -1;
 FileOperator fop;
+ShowUtils su;
+bool ShowUtils::isPause = true;
 
 int main(int argc, const char **argv)
 {
@@ -36,19 +37,20 @@ int main(int argc, const char **argv)
     parser.addArgument("-c", "--calib_matrix"); //是否使用一个初始的标定矩阵变换雷达帧（斜装头建图时才用到）
     parser.parse(argc, argv);
 
-    string out_dir = parser.get("out_dir") + "/" + fop.getFileName(parser.get("pcap"));
+    string out_dir = parser.get("out_dir");
+    fop.makeDir(out_dir);
+
     if(parser.count("begin_id"))
         begin_id = parser.get<int>("begin_id");
     if(parser.count("end_id"))
         end_id = parser.get<int>("end_id");
 
-    out_dir += "_" + to_string(begin_id) + "_" + to_string(end_id) + "/PCD";
-    fop.makeDir(out_dir);
+    
 
     if (parser.count("show"))
     {   
         is_show = parser.get<bool>("show");
-        viewer = new pcl::visualization::PCLVisualizer("default");
+        su.init("Show PCD", &ShowUtils::keyboardEvent);
     }
 
     PointCloudReader reader;
@@ -89,8 +91,6 @@ int main(int argc, const char **argv)
             pcf.setOutlierFilter();
             pcf.filter(cloud, cloud);
         }
-
-        copyScanID(cloud);
         
         // 使用双头的数据建图
         if(parser.count("pcap2"))
@@ -107,8 +107,6 @@ int main(int argc, const char **argv)
                 pcf.setOutlierFilter();
                 pcf.filter(cloud2, cloud2);
             }
-
-            copyScanID(cloud2, false);
             
             switch(sync.correctFrameOffset(cloud, cloud2, frameID, frameOffset))
             {
@@ -136,8 +134,8 @@ int main(int argc, const char **argv)
 
         if (is_show)
         {
-            vis_utils::showText(viewer, to_string(frameID), "frameID");
-            vis_utils::ShowCloud(cloud, viewer, "intensity", 3);
+            su.showText(to_string(frameID), "frameID");
+            su.ShowCloud(cloud, "cloud", "curvature");
         }
         savePCD(cloud, out_dir, frameID);
         

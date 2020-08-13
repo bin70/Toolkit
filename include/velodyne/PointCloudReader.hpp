@@ -66,8 +66,11 @@ public:
 	}
 
 	/***********************************************************
-		 * 返回false表示读取失败
-		 ***********************************************************/
+	 * 返回false表示读取失败
+	 * 现版本的Mapping程序需要:
+	 * - data_n[2]存储线编号
+	 * - curvature存储每个点离雷达中心的距离
+	 ***********************************************************/
 	bool readPointCloud(PointCloud::Ptr _cloud, long long _frameID)
 	{
 		if (!inited || !_cloud)
@@ -98,7 +101,7 @@ public:
 				pt.data_n[1] = timestamp - pt.data_n[0];			   //微秒
 				pt.data_n[2] = scanID[n] + scanGap;
 				pt.data_n[3] = dist;
-				pt.curvature = dist;
+				pt.curvature = pt.data_n[3];
 				_cloud->points.push_back(pt);
 			}
 		}

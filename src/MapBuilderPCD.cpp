@@ -8,21 +8,21 @@
 #include <io/TrajIO.hpp>
 #include <build_map/MapManager.hpp>
 
-#include <visualization/ShowCloud.hpp>
+#include <visualization/ShowUtils.hpp>
 #include <velodyne/LidarConfig.hpp>
 
 using namespace std;
 using namespace Eigen;
-using namespace vis_utils;
 using namespace pcl::visualization;
 
 FileOperator fop;
 bool show_cloud = false;
 float resolution = 0.03;
-PCLVisualizer *viewer;
+ShowUtils su;
+bool ShowUtils::isPause = true;
 
 // vlp32的配置
-LidarConfig lidar_config(32, 15.0, -25.0);
+LidarConfig lidar_config(VLP32);
 
 int main(int argc, const char** argv)
 {
@@ -36,12 +36,11 @@ int main(int argc, const char** argv)
     parser.parse(argc, argv);
 
     string input_dir = parser.get("input_dir");    
-    ;
 
     if(parser.count("show_cloud"))
     {
         show_cloud = parser.get<bool>("show_cloud");
-        viewer = new PCLVisualizer("show map");
+        su.init("Map Builder", &ShowUtils::keyboardEvent);
     }
 
     if(parser.count("resolution"))
@@ -113,21 +112,12 @@ int main(int argc, const char** argv)
                 
         map.addFrame(cloud);
         if(show_cloud)
-            ShowCloud(map.getMapPtr(), viewer, "curvature", 2);
+            su.ShowCloud(map.getMapPtr(), "map", "curvature");
 
         frame_id += traj.getFrameGap();
         if(frame_id>end_id) break;
         consoleProgress(frame_id, begin_id, end_id);
     }
-
-    // 跟loam一样的存储方式，为了方便对比显示
-    // for(int i=0; i<map.getMapPtr()->points.size(); ++i)
-    // {
-    //     auto &p = map.getMapPtr()->points[i];
-    //     float temp = p.intensity;
-    //     p.intensity = p.data_n[2];
-    //     p.data_n[2] = temp;
-    // }
 
     string out_path = input_dir+"/map_"+to_string(begin_id)+"_"+to_string(end_id)+".pcd";
     pcl::io::savePCDFileBinaryCompressed(out_path, *map.getMapPtr());
