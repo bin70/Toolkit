@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <common.hpp>
 #include <point_cloud/common.hpp>
+#include <io/FileOperator.hpp>
 #include <algorithm>
 
 inline int frameid(std::string path)

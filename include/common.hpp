@@ -1,7 +1,6 @@
 #pragma once
 
 #define LINUX 1
-#define DEBUG 1
 
 //----------system operation----------
 #ifdef LINUX
