@@ -20,41 +20,50 @@ public:
       leafsize(map_resolution) {}
 
   ~MapManager(){}
-  
+
   void update()
   {
     octree->setInputCloud(map);
     octree->addPointsFromInputCloud();
   }
 
+  // 通过八叉树搜索最近邻
   bool getNearestPoint(PointType &pointSch, PointType &pointSel)
   {
     std::vector<int> pointIdxNKNSearch;
     std::vector<float> pointNKNSquaredDistance;
 
     // K = 1
-    if (octree->nearestKSearch(pointSch, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)
+    if (octree->isVoxelOccupiedAtPoint(pointSch)
+        && octree->nearestKSearch(pointSch, 1, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)
     {
       pointSel = octree->getInputCloud()->points[pointIdxNKNSearch[0]];
       return true;
     }
-    else
-    {
-      return false;
-    }
+    return false;
   }
+
+  // 直接搜索体素
+  // bool voxelSearch(PointType &pointSch, PointType &pointSel)
+  // {
+  //   std::vector<int> pointInVoxel;
+  //   if (octree->isVoxelOccupiedAtPoint(pointSch))
+  //   {
+  //     if(octree->voxelSearch(pointSch, pointInVoxel))
+  //     {
+  //       std::cout << "在体素内找到 " << pointInVoxel.size() << " 个点." << std::endl;
+  //       pointSel = octree->getPointByIndex(pointInVoxel[0]); //取第一个点
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }
 
   void AddFrameToMap(PointCloud::Ptr frame)
   {
     PointType tempPoint;
     for (int i = 0; i < frame->points.size(); i++)
     { // Add frame to Global Map
-      //tempPoint.x = frame->points[i].x;
-      //tempPoint.y = frame->points[i].y;
-      //tempPoint.z = frame->points[i].z;
-      //tempPoint.intensity = frame->points[i].intensity;
-      //tempPoint.data_n[0] = frame->points[i].data_n[0];
-      //tempPoint.data_n[1] = frame->points[i].data_n[1];
       tempPoint = frame->points[i];
       if (!octree->isVoxelOccupiedAtPoint(tempPoint))
         octree->addPointToCloud(tempPoint, map);
@@ -79,7 +88,7 @@ public:
     octree->setInputCloud(map);
     octree->addPointsFromInputCloud();
   }
-  PointCloud::Ptr getMapPtr() { return map; }
+  const PointCloud::Ptr& getMapPtr() { return map; }
 
 private:
   OctreePtr octree;
