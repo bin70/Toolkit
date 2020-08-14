@@ -91,5 +91,6 @@ public:
         // translation
         for (int i = 0; i < 3; ++i)
             e[3 + i] = m(i, 3);
+        return e;
     }
 };
