@@ -73,7 +73,8 @@ public:
     inline void ShowCloud(
         const pcl::PointCloud<PointType>::Ptr cloud,
         std::string cloud_id = "cloud", 
-        std::string show_field = "intensity")
+        std::string show_field = "intensity",
+        int point_size = 1)
     {
         checkInited();
         if (viewer->contains(cloud_id)) viewer->removePointCloud(cloud_id);
@@ -81,12 +82,14 @@ public:
         //从电云intensity字段生成颜色信息
         pcl::visualization::PointCloudColorHandlerGenericField<PointType> cloud_handle(cloud, show_field);
         viewer->addPointCloud(cloud, cloud_handle, cloud_id);
+        viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, point_size, cloud_id);
         viewer->spinOnce();
     }
 
     void ShowPath3D(
         const std::vector<pcl::PointXYZI>& path, 
-        int path_id)
+        int path_id,
+        int line_size = 2)
     {
         std::string pathid = "path" + std::to_string(path_id) + "_";
         pcl::PointXYZI start, end;
@@ -95,6 +98,7 @@ public:
             start = path[i];
             end = path[i+1];
             viewer->addLine(start, end, pathid+std::to_string(i));
+            viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, line_size, pathid+std::to_string(i));
             viewer->spinOnce();
         }
     }

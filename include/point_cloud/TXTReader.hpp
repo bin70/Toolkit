@@ -7,7 +7,6 @@ class TXTReader
     using string = std::string;
 private:
     int data_columns;
-    void openDir(string path);
     float norm(PointType &p){ return std::sqrt(p.x*p.x + p.y*p.y + p.z*p.z);}
     template <typename T>
     
@@ -24,8 +23,11 @@ private:
     FileOperator fop;
 
 public:
+    TXTReader(){}
     TXTReader(string txt_dir, int _data_columns = 4);
     ~TXTReader();
+    void openDir(string path);
+    void setDataCol(int value) { data_columns = value;}
     bool readPointCloud(PointCloud::Ptr &cloud, string filename);
 };
 
@@ -88,9 +90,11 @@ bool TXTReader::readPointCloud(PointCloud::Ptr &cloud, std::string filename)
         p.z = val<float>(st[2]);
         
         // 25m
-        if (norm(p) > 25.0) continue;
+        // if (norm(p) > 25.0) continue;
         
-        p.intensity = val<float>(st[3]);;
+        if (data_columns == 4)
+            p.intensity = val<float>(st[3]);;
+        
         cloud->points.push_back(p);
     }
     fs.close();
