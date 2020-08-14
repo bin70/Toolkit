@@ -90,7 +90,20 @@ public:
         for(int i=0; i<4; ++i)
             for(int j=0; j<4; ++j)
                 fmatrix >> m(i, j);
+        fmatrix.close();
         return m;
+    }
+
+    void writeMatirx(const Matrix& m, std::string path)
+    {
+        std::ofstream fmatrix(path.c_str());
+        for(int i=0; i<4; ++i)
+        {
+            for(int j=0; j<4; ++j)
+                fmatrix << m(i, j) << " ";
+            fmatrix << std::endl;
+        }
+        fmatrix.close();
     }
 
 private:
