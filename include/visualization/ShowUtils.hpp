@@ -5,15 +5,19 @@
 
 /**********************************************
  * 可视化工具使用方法: 
- * 1.实例化
- *   ShowUtils su;
- *  
- * 2.初始化静态成员
- *   bool ShowUtils::isPause = true;
+ * 1. CMakeList中的配置
+ * - include_directories(Toolkit_DIR/include)
+ * - link_directories(Toolkit_DIR/lib)
+ * - target_link_libraries(executable ShowUtils)
  * 
- * 3.初始化键盘响应
- *   su.init(name, ShowUtils::keyboardEvent); 
+ * 2. 代码中使用
+ * - #include <visualization/ShowUtils.hpp>
+ * - ShowUtils su(name, stopBySpace);
+ *   参数说明:
+ *   name 窗口名称
+ * 　stopBySpace 是否通过空格键暂停（默认false,会自动在调用waitSpace处暂停）
  *********************************************/
+
 using PCLViewer = pcl::visualization::PCLVisualizer;
 using KeyboardEvent = pcl::visualization::KeyboardEvent;
 typedef void (*KeyboardEventFunc)(const KeyboardEvent &, void*);
