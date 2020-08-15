@@ -61,7 +61,7 @@ public:
         return m2e(m2);
     }
 
-    Matrix4d tq2matrix(Vector7d &tq)
+    Matrix4d tq2matrix(const Vector7d &tq)
     {
         Matrix4d m = Matrix4d::Identity();
 
