@@ -368,6 +368,12 @@ public:
         return str;
     }
 
+    String getOpt(const String& name, const String& default_value){
+        if(!count(name))
+            return default_value;
+        return get(name);
+    }
+
     template <typename T>
     T get(const String& name) {
         String str = retrieve<String>(name);
@@ -381,6 +387,15 @@ public:
         T v;
         ss >> v;
         return v;
+    }
+
+    template <typename T>
+    T getOpt(const String& name, T default_value) {
+        
+        if(!count(name))
+            return default_value;
+
+        return get<T>(str);
     }
     
     // --------------------------------------------------------------------------

@@ -17,9 +17,6 @@ using namespace Eigen;
 using namespace pcl::visualization;
 
 FileOperator fop;
-bool show_cloud = false;
-float resolution = 0.03;
-
 ShowUtils su;
 
 // vlp32的配置
@@ -42,14 +39,11 @@ int main(int argc, const char** argv)
     string out_dir = parser.get("out_dir");
     fop.makeDir(out_dir);
 
-    if(parser.count("show_cloud"))
-    {
-        show_cloud = parser.get<bool>("show_cloud");
+    float resolution = parser.getOpt<float>("resolution", 0.03);
+    bool show_cloud = parser.getOpt<bool>("show_cloud", false);
+    
+    if(show_cloud)
         su.init("Map Builder", true);
-    }
-
-    if(parser.count("resolution"))
-        resolution = parser.get<float>("resolution");
 
     PCDReader reader(input_dir);
     TrajIO traj(traj_path);
@@ -60,13 +54,9 @@ int main(int argc, const char** argv)
               << "\toutput_dir = " << out_dir << std::endl;
 
     // 不指定建图范围的话，直接用轨迹中的ID建图
-    int begin_id = traj.getStartID();
-    int end_id = traj.getEndID();
+    int begin_id = parser.getOpt<int>("begin_id", traj.getStartID());
+    int end_id = parser.getOpt<int>("end_id", traj.getEndID());
 
-    if(parser.count("begin_id"))
-        begin_id =parser.get<int>("begin_id");
-    if(parser.count("end_id"))
-        end_id = parser.get<int>("end_id");
     traj.checkID(begin_id, end_id);
     
     std::cout << "\tbegin_id = "  << begin_id << std::endl
