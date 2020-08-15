@@ -43,54 +43,119 @@ public:
 
 class TrajIO
 {
+    using string = std::string;
+    using Vector7d = Eigen::Matrix<double, 7, 1>;
+    template <typename T> using vector = std::vector<T>;
+
+private:
+    std::map<TrajType, string> traj_format = {
+        {ROS_LOAM, "| ROS_LOAM FrameID rx ry rz tx ty tz timestamp |"},
+        {G2OT, "| iSAM_VERTEX FrameID x y z qx qy qz qw timestamp |"},
+        {G2O, "| VERTEX_SE3:QUAT FrameID x y z qx qy qz qw | "}
+    };
+
 public:
-    TrajIO(std::string traj_path, TrajType type = ROS_LOAM, int ignore_lines = 3)
+    TrajIO(std::string traj_path)
     :   startID(-1),
         endID(-1),
         frameGap(0),
         data_name(fop.getFileName(traj_path)),
         pose_cnt(0)
     {
-        assert( fop.isExist(traj_path) );
+        if(!fop.isExist(traj_path))
+        {
+            std::cout << "Cannot open trajectory file: " << traj_path << "!" << std::endl;
+            exit(-1);
+        } 
+
         traj_file_.open(traj_path.c_str());
 
-        if(type != KITTI && type != G2O)
-        {// 头文件
-        for (int i = 0; i < ignore_lines && !traj_file_.eof(); ++i)
-            getline(traj_file_, unused);
+        string line;
+        getline(traj_file_, line); // 获取轨迹文件的格式
+
+        vector<string> st;
+        boost::trim(line);
+        boost::split(st, line, boost::is_any_of(" \t\n") , boost::token_compress_on);
+
+        if(st[0] == "ROS_LOAM") traj_type = ROS_LOAM;
+        else if(st[0] == "iSAM_VERTEX") traj_type = G2OT;
+        else if(st[0] == "VERTEX_SE3:QUAT") traj_type = G2O;
+        else traj_type = KITTI;
+
+        startID = atoi(st[1].c_str());
+
+        switch(traj_type)
+        {
+            case ROS_LOAM:
+            {
+                curPose.frameID = atoi(st[1].c_str());
+                for (int i = 0; i < 6; ++i) curPose.loamTrans[i] = atof(st[2+i].c_str());
+                curPose.timestamp = atof(st[8].c_str());
+                curPose.tf = tt.euler2matrix(curPose.loamTrans);
+                
+                traj.insert( std::make_pair(curPose.frameID, curPose) );
+                break;
+            }
+            case G2OT:
+            {
+                // 9 number each line: {Frame Number, Position[x|y|z], Quaternion[qx|qy|qz|qw], Timestamp(us)}
+                curPose.frameID = atoi(st[1].c_str());
+                for(int i=0; i<7; ++i) tq[i] = atof(st[2+i].c_str());
+                curPose.tf = tt.tq2matrix(tq);
+                curPose.timestamp = atof(st[9].c_str());
+                
+                traj.insert( std::make_pair(curPose.frameID, curPose) );
+                break;
+            }
+            case G2O:
+            {
+                // 8 number each line: {Frame Number, Position[x|y|z], Quaternion[qx|qy|qz|qw]}
+                curPose.frameID = atoi(st[1].c_str());
+                for(int i=0; i<7; ++i) tq[i] = atof(st[2+i].c_str());
+                curPose.tf = tt.tq2matrix(tq);
+            
+                traj.insert( std::make_pair(curPose.frameID, curPose) );
+                break;
+            }
+            case KITTI:
+            {
+                curPose.tf = Eigen::Matrix4d::Identity();
+        
+                for(int row=0; row<3; ++row)
+                    for(int col=0; col<4; ++col)
+                        curPose.tf(row, col) = (double)atof(st[row*4+col].c_str());
+                
+                curPose.frameID = (long long)pose_cnt++;
+                traj.insert( std::make_pair(curPose.frameID, curPose) );
+                break;
+            }
         }
-        
-        std::cout << "Reading trajectory. traj_type = " << type << std::endl;
 
-        // 读取开始帧号
-        if(readPose(type))
-            startID = curPose.frameID;
-        
-        assert(startID >=0);
+        run();
+    }
 
-        std::cout << "startID = " << startID << std::endl;
-
+    void run()
+    {
         // 获取帧间隔
-        if(readPose(type))
+        if(readPose(traj_type))
             frameGap = curPose.frameID - startID;
         
-        assert((frameGap>=1 && frameGap<=3)== true);
-
         // 读取剩余位姿
-        while(readPose(type))
+        while(readPose(traj_type))
             ;
         
         traj_file_.close();
         endID = curPose.frameID;
         
         std::cout << "\n========================= Details of trajectory ============================" << std::endl
-                  << "\tstartID in trajectory = " << startID << std::endl
-                  << "\tendID in trajectory = " << endID << std::endl
-                  << "\tframeGap = " << frameGap << std::endl
-                  << "\tpose number = " << traj.size() << std::endl
+                  << "\tformat: " << traj_format[traj_type] << std::endl
+                  << "\tstartID: " << startID << std::endl
+                  << "\tendID: " << endID << std::endl
+                  << "\tframeGap: " << frameGap << std::endl
+                  << "\tpose number: " << traj.size() << std::endl
                   << "==============================================================================" << std::endl;
     }
-        
+
     void checkID(int b, int e)
     {
         if(b < startID || e > endID)
@@ -106,6 +171,7 @@ public:
         return traj[frameID];
     }
 
+    TrajType getTrajType() {return traj_type;}
     const int getFrameGap() { return frameGap; }
     const int getStartID() { return startID;}
     const int getEndID(){ return endID;}
@@ -212,8 +278,6 @@ private:
     {
         if(!(traj_file_ >> unused)) return false;
 
-        std::cout << "traj LABEL: " << unused << std::endl;
-
         Eigen::Quaterniond q;
         Eigen::Vector3d v;
         Eigen::Matrix3d r;
@@ -234,19 +298,11 @@ private:
     bool readPoseG2O()
     {
         if(!(traj_file_ >> unused)) return false;
-        Eigen::Quaterniond q;
-        Eigen::Vector3d v;
-        Eigen::Matrix3d r;
 
-        // 8 number each line: {Frame Number, Position[x|y|z], Quaternion[qx|qy|qz|qw]}
-        traj_file_ >> curPose.frameID >> v(0) >> v(1) >> v(2) >> q.x() >> q.y() >> q.z() >> q.w();
-        curPose.qua = q;
-        curPose.pos = v;
-        curPose.tf = Eigen::Matrix4d::Identity();
-        r = q.toRotationMatrix();
-        curPose.tf.block(0, 0, 3, 3) = r;
-        curPose.tf.block(0, 3, 3, 1) = v;
-    
+        traj_file_ >> curPose.frameID;
+        for(int i=0; i<7; ++i) traj_file_ >> tq(i);
+        curPose.tf = tt.tq2matrix(tq);
+
         traj.insert( std::make_pair(curPose.frameID, curPose) );
         return true;
     }
@@ -271,36 +327,16 @@ private:
         }
         
         curPose.tf = Eigen::Matrix4d::Identity();
-
-   
+        
         for(int row=0; row<3; ++row)
-        {
             for(int col=0; col<4; ++col)
-            {
                 curPose.tf(row, col) = (double)atof(st[row*4+col].c_str());
-            }
-        }
-
-        for(int i=0; i<4; ++i)
-        {
-            for(int j=0; j<4; ++j)
-                std::cout << curPose.tf(i,j) << " ";
-            std::cout << std::endl;
-        }
-
-        Eigen::Matrix3d r = curPose.tf.block(0, 0, 3, 3);
-        Eigen::Quaterniond q(r);
-        curPose.qua = q;
-        curPose.pos = curPose.tf.block(0, 3, 3, 1);
+            
+        curPose.frameID = (long long)pose_cnt++;
+        traj.insert( std::make_pair(curPose.frameID, curPose) );
         
-        curPose.frameID = (long long)pose_cnt;
-        
-        // 这里要检查一下
-        std::cout << "frameID:" << curPose.frameID << std::endl;
-
-        traj[pose_cnt] = curPose;
-        pose_cnt++;
-
+        // 这里检查一下位姿编号
+        //std::cout << "frameID:" << curPose.frameID << std::endl;
         return true;
     }
 
@@ -315,5 +351,7 @@ private:
     std::fstream traj_file_;
     std::string data_name;
     FileOperator fop;
-
+    TrajType traj_type;
+    int ignore_lines = 0;
+    Vector7d tq;
 };
