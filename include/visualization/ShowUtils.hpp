@@ -49,13 +49,16 @@ public:
     PCLViewer* getViewer(); 
     
     void ShowCloud(const pcl::PointCloud<PointType>::Ptr cloud,
-        std::string cloud_id = "cloud", std::string show_field = "intensity",
+        int id = 0, std::string cloud_name = "cloud", 
+        std::string show_field = "intensity",
         int point_size = 1);
 
     void ShowPath3D(const std::vector<pcl::PointXYZI>& path, 
-        int path_id, int line_size = 2);
+        int path_id, int line_size = 2, int label = 0);
+    
+    void ShowPose(const Eigen::Matrix4d& t, int pose_id = 0);
 
-    void showText(std::string text, std::string display_id, 
+    void ShowText(std::string text, std::string display_id, 
         Eigen::Vector3d position = Eigen::Vector3d::Zero(), 
         Eigen::Vector3d display_color = Eigen::Vector3d::Ones(),
         float display_size = 1.0);
