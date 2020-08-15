@@ -44,41 +44,90 @@ void ShowUtils::init(std::string name, bool _stopBySpace)
 
 PCLViewer *ShowUtils::getViewer() { return viewer; }
 
-void ShowUtils::ShowCloud(const pcl::PointCloud<PointType>::Ptr cloud,
-    std::string cloud_id, std::string show_field, int point_size)
+using namespace pcl::visualization;
+using namespace std;
+using namespace Eigen;
+
+void ShowUtils::ShowPose(const Matrix4d& t, int pose_id)
+{
+    Transform<double, 3, Affine> tf(t);
+
+    string poseid = "reference" + to_string(pose_id);
+    
+    if (viewer->contains(poseid))
+        viewer->removeCoordinateSystem(poseid);
+
+    viewer->addCoordinateSystem(1.0, (const Affine3f)tf, poseid);
+    //viewer->addText(std::to_string(pose_id), t(0,3), t(1,3), "text"+std::to_string(pose_id), 0);
+    //pcl::PointXYZ position;
+    //position.x = t(0, 3);
+    //position.y = t(1, 3);
+    //position.z = t(2, 3);
+    // viewer->addText3D(std::to_string(pose_id), position, 0.5, 1.0, 1.0, 1.0, "text" + std::to_string(pose_id), 0);
+    viewer->spinOnce();
+}
+
+void ShowUtils::ShowCloud(const PointCloud::Ptr cloud,
+    int id, string cloud_name, std::string show_field, int point_size)
 {
     checkInited();
+
+    std::string cloud_id = cloud_name + to_string(id);
+
     if (viewer->contains(cloud_id))
         viewer->removePointCloud(cloud_id);
+    
+    if(show_field == "custom")
+    {
+        PointCloudColorHandlerCustom<PointType> color_handler(cloud, 43, 213, 179);
+        viewer->addPointCloud(cloud, color_handler, cloud_id);
+        viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_OPACITY, 0.3, cloud_id);
+    }
+    else
+    {
+        PointCloudColorHandlerGenericField<PointType> cloud_handle(cloud, show_field);
+        viewer->addPointCloud(cloud, cloud_handle, cloud_id);
+    }
 
-    //从电云intensity字段生成颜色信息
-    pcl::visualization::PointCloudColorHandlerGenericField<PointType> cloud_handle(cloud, show_field);
-    viewer->addPointCloud(cloud, cloud_handle, cloud_id);
-    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, point_size, cloud_id);
+    viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, point_size, cloud_id);
     viewer->spinOnce();
 }
 
 void ShowUtils::ShowPath3D(
     const std::vector<pcl::PointXYZI> &path,
     int path_id,
-    int line_size)
+    int line_size,
+    int label)
 {
     std::string pathid = "path" + std::to_string(path_id) + "_";
+    int r, g, b;
+
+    switch(label)
+    {
+        case 0: 
+            r = 255; g = 0; b = 153; break;
+        case 1:
+            r = 9; g = 151; b = 247; break;
+        case 2:
+            r = 153; g = 255; b = 0; break;
+    };
+
     pcl::PointXYZI start, end;
     for (int i = 0; i < path.size() - 1; ++i)
     {
         start = path[i];
         end = path[i + 1];
         viewer->addLine(start, end, pathid + std::to_string(i));
-        viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, line_size, pathid + std::to_string(i));
+        viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, line_size, pathid + std::to_string(i));
+        viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, r, g, b, pathid + std::to_string(i));
         viewer->spinOnce();
     }
 }
 
-void ShowUtils::showText(
+void ShowUtils::ShowText(
     std::string text, std::string display_id,
-    Eigen::Vector3d position,
-    Eigen::Vector3d display_color,
+    Vector3d position,
+    Vector3d display_color,
     float display_size)
 {
     pcl::PointXYZ pos;
