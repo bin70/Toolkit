@@ -18,8 +18,8 @@ using namespace pcl::visualization;
 FileOperator fop;
 bool show_cloud = false;
 float resolution = 0.03;
-ShowUtils su;
-bool ShowUtils::isPause = true;
+
+ShowUtils su("Map Builder", true);
 
 // vlp32的配置
 LidarConfig lidar_config(VLP32);
@@ -28,7 +28,7 @@ int main(int argc, const char** argv)
 {
     ArgumentParser parser;
     parser.addArgument("-i", "--input_dir", true);
-    parser.addArgument("-t", "--traj_type", true);
+    parser.addArgument("-t", "--traj_path", true);
     parser.addArgument("-b", "--begin_id");
     parser.addArgument("-e", "--end_id");
     parser.addArgument("-s", "--show_cloud");
@@ -36,29 +36,23 @@ int main(int argc, const char** argv)
     parser.parse(argc, argv);
 
     string input_dir = parser.get("input_dir");    
+    string traj_path = parser.get("traj_path");
 
     if(parser.count("show_cloud"))
     {
         show_cloud = parser.get<bool>("show_cloud");
-        su.init("Map Builder", &ShowUtils::keyboardEvent);
     }
 
     if(parser.count("resolution"))
         resolution = parser.get<float>("resolution");
 
-    string pcd_dir = input_dir+"/PCD";
-    string traj_path = input_dir+"/traj_with_timestamp.txt";
-    TrajType traj_type = (TrajType)parser.get<int>("traj_type");
+    PCDReader reader(input_dir);
+    TrajIO traj(traj_path);
 
     std::cout << "================ runing information ===============\n" << std::endl
-              << "\tpcd directory = " << pcd_dir << std::endl
-              << "\ttraj_path = " << traj_path << std::endl
-              << "\ttraj_type = " << traj_type << std::endl;
-
-    PCDReader reader(pcd_dir);
-    reader.setBinary(true);
-    
-    TrajIO traj(traj_path, traj_type);
+              << "\tpcd directory = " << input_dir << std::endl
+              << "\ttraj_path = " << traj_path << std::endl;
+    pLine();
 
     // 不指定建图范围的话，直接用轨迹中的ID建图
     int begin_id = traj.getStartID();
@@ -112,8 +106,10 @@ int main(int argc, const char** argv)
                 
         map.addFrame(cloud);
         if(show_cloud)
+        {
             su.ShowCloud(map.getMapPtr(), "map", "curvature");
-
+            su.waitSpace();
+        }
         frame_id += traj.getFrameGap();
         if(frame_id>end_id) break;
         consoleProgress(frame_id, begin_id, end_id);
