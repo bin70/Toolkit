@@ -395,7 +395,7 @@ public:
         if(!count(name))
             return default_value;
 
-        return get<T>(str);
+        return get<T>(name);
     }
     
     // --------------------------------------------------------------------------
