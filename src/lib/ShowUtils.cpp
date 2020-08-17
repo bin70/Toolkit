@@ -113,19 +113,21 @@ void ShowUtils::ShowPath3D(
     };
 
     pcl::PointXYZI start, end;
+    std::string showid;
     for (int i = 0; i < path.size() - 1; ++i)
     {
         start = path[i];
         end = path[i + 1];
-        std::string showid =  pathid + std::to_string(i);
-        if(!viewer->contains(showid))
-        {   
+        showid =  pathid + std::to_string(i);
+        //if(!viewer->contains(showid))
+        //{   
             viewer->addLine(start, end, r, g, b, showid);
             viewer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, line_size, showid);
+            viewer->spinOnce();
             //viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, line_size, showid);
             //viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_COLOR, r, g, b, showid);
-        }
-        viewer->spinOnce();
+        //}
+        
     }
 }
 
