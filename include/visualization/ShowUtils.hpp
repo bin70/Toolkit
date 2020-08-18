@@ -52,6 +52,9 @@ public:
         int id = 0, std::string cloud_name = "cloud", 
         std::string show_field = "intensity",
         int point_size = 1);
+    
+    void ShowLine(const pcl::PointXYZ start, const pcl::PointXYZ end, 
+        std::string showid, int label = 0, int line_size = 2);
 
     void ShowPath3D(const std::vector<pcl::PointXYZI>& path, 
         int path_id, int line_size = 2, int label = 0);

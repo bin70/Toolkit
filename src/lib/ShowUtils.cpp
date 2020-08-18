@@ -19,7 +19,6 @@ void ShowUtils::waitSpace()
         viewer->spinOnce();
 }
 
-
 void ShowUtils::checkInited() //防止可视化类未分配空间
 {
     if (!isInited())
@@ -91,6 +90,29 @@ void ShowUtils::ShowCloud(const PointCloud::Ptr cloud,
 
     viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, point_size, cloud_id);
     viewer->spinOnce();
+}
+
+void ShowUtils::ShowLine(const pcl::PointXYZ start,
+    const pcl::PointXYZ end, std::string showid, 
+    int label, int line_size)
+{
+    int r, g, b;
+
+    switch(label)
+    {
+        case 0: 
+            r = 255; g = 0; b = 153; break;
+        case 1:
+            r = 9; g = 151; b = 247; break;
+        case 2:
+            r = 153; g = 255; b = 0; break;
+    };
+
+    if(viewer->contains(showid))
+        viewer->removeShape(showid);
+    viewer->addLine(start, end, r, g, b, showid);
+    viewer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, line_size, showid);
+    viewer->spinOnce(); 
 }
 
 void ShowUtils::ShowPath3D(
