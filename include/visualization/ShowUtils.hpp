@@ -34,10 +34,15 @@ private:
             else
                 isPause = !isPause;
         }
+        else if(event.getKeySym() == "Return" && event.keyDown())
+        {
+            std::cout << "Closed by user." << std::endl;
+            exit(0);
+        }
     }
     static bool stopBySpace;
     static bool isPause;
-    void checkInited(); //防止可视化类未分配空间
+    void checkInited() const; //防止可视化类未分配空间
     void init(std::string name, KeyboardEventFunc func);
 
 public:
@@ -45,27 +50,28 @@ public:
     ShowUtils(std::string name, bool _stopBySpace = false);
     void init(std::string name, bool _stopBySpace = false);
     void waitSpace();
-    bool isInited();
-    PCLViewer* getViewer(); 
+    void waitSpace(bool _isPause);
+    bool isInited() const;
+    PCLViewer* getViewer() const; 
     
-    void ShowCloud(const pcl::PointCloud<PointType>::Ptr cloud,
+    void ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
         int id = 0, std::string cloud_name = "cloud", 
         std::string show_field = "intensity",
-        int point_size = 1);
+        int point_size = 1) const;
     
     void ShowPlane(const Eigen::Vector4d& ABCD, const Eigen::Vector3d& center,
-        const std::string& showid, bool only_show_name = false);
+        const std::string& showid, bool only_show_name = false) const;
 
     void ShowLine(const pcl::PointXYZ& start, const pcl::PointXYZ& end, 
-        const std::string& showid, int label = 0, int line_size = 2);
+        const std::string& showid, int label = 0, int line_size = 2) const;
 
     void ShowPath3D(const std::vector<pcl::PointXYZI>& path, 
-        int path_id, int line_size = 2, int label = 0);
+        int path_id, int line_size = 2, int label = 0) const;
     
-    void ShowPose(const Eigen::Matrix4d& t, int pose_id = 0);
+    void ShowPose(const Eigen::Matrix4d& t, int pose_id = 0) const;
 
     void ShowText(std::string text, std::string display_id, 
         Eigen::Vector3d position = Eigen::Vector3d::Zero(), 
         Eigen::Vector3d display_color = Eigen::Vector3d::Ones(),
-        float display_size = 1.0);
+        float display_size = 1.0) const;
 };
