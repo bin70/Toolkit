@@ -53,8 +53,11 @@ public:
         std::string show_field = "intensity",
         int point_size = 1);
     
-    void ShowLine(const pcl::PointXYZ start, const pcl::PointXYZ end, 
-        std::string showid, int label = 0, int line_size = 2);
+    void ShowPlane(const Eigen::Vector4d& ABCD, const Eigen::Vector3d& center,
+        const std::string& showid, bool only_show_name = false);
+
+    void ShowLine(const pcl::PointXYZ& start, const pcl::PointXYZ& end, 
+        const std::string& showid, int label = 0, int line_size = 2);
 
     void ShowPath3D(const std::vector<pcl::PointXYZI>& path, 
         int path_id, int line_size = 2, int label = 0);

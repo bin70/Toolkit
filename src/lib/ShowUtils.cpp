@@ -57,12 +57,6 @@ void ShowUtils::ShowPose(const Matrix4d& t, int pose_id)
         viewer->removeCoordinateSystem(poseid);
 
     viewer->addCoordinateSystem(1.0, (const Affine3f)tf, poseid);
-    //viewer->addText(std::to_string(pose_id), t(0,3), t(1,3), "text"+std::to_string(pose_id), 0);
-    //pcl::PointXYZ position;
-    //position.x = t(0, 3);
-    //position.y = t(1, 3);
-    //position.z = t(2, 3);
-    // viewer->addText3D(std::to_string(pose_id), position, 0.5, 1.0, 1.0, 1.0, "text" + std::to_string(pose_id), 0);
     viewer->spinOnce();
 }
 
@@ -92,8 +86,49 @@ void ShowUtils::ShowCloud(const PointCloud::Ptr cloud,
     viewer->spinOnce();
 }
 
-void ShowUtils::ShowLine(const pcl::PointXYZ start,
-    const pcl::PointXYZ end, std::string showid, 
+void ShowUtils::ShowPlane(const Eigen::Vector4d& ABCD, const Eigen::Vector3d& center,
+    const std::string& showid, bool only_show_name)
+{
+    using XYZ = pcl::PointXYZ;
+
+    if(viewer->contains("text_"+showid))
+        viewer->removeShape("text_"+showid);
+    
+    // 显示名称
+    viewer->addText3D(showid, XYZ(center[0], center[1], center[2]), 
+        0.5, // text scale
+        1.0, 1.0, 1.0, // color 
+        "text_"+showid);
+        
+    if(!only_show_name)
+    {
+        if(viewer->contains(showid))
+        {
+            viewer->removeShape("normal_"+showid);
+            viewer->removeShape(showid);
+        }
+        // 可视化平面
+        pcl::ModelCoefficients coeff;
+        coeff.values.push_back(ABCD[0]);
+        coeff.values.push_back(ABCD[1]);
+        coeff.values.push_back(ABCD[2]);
+        coeff.values.push_back(ABCD[3]); //  注意Plane类中存储的D=-(Ax+By+Cz)
+        
+        viewer->addPlane(coeff, center[0], center[1], center[2], showid);
+
+        // 可视化法向
+        Vector3d end = center + ABCD.normalized().block(0,0,3,1);
+        viewer->addArrow<XYZ>(XYZ(end[0], end[1], end[2]),
+            XYZ(center[0], center[1], center[2]),
+            1.0, 1.0, 1.0, // color
+            "normal_"+showid);
+    }
+
+    viewer->spinOnce(); 
+}
+
+void ShowUtils::ShowLine(const pcl::PointXYZ& start,
+    const pcl::PointXYZ& end, const std::string& showid, 
     int label, int line_size)
 {
     int r, g, b;
