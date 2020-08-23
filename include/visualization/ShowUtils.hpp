@@ -54,6 +54,16 @@ public:
     bool isInited() const;
     PCLViewer* getViewer() const; 
     
+    void setBackGroundColor(float r, float g, float b);
+
+    void RemovePointCloud(std::string show_id);
+    void RemoveShape(std::string show_id);
+
+    void ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
+        std::string show_id = "cloud", 
+        std::string show_field = "intensity",
+        int point_size = 2) const;
+
     void ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
         int id = 0, std::string cloud_name = "cloud", 
         std::string show_field = "intensity",

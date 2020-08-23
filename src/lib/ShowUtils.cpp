@@ -8,9 +8,18 @@ ShowUtils::ShowUtils(std::string name, bool _stopBySpace){ init(name, _stopBySpa
 
 bool ShowUtils::isInited() const { return inited; }
 
+// 第一次都会暂停，之后看参数设置是否由键盘来暂停
 void ShowUtils::waitSpace()
 {
     checkInited();
+
+    static bool stop_once = false;
+
+    if(!stop_once)
+    {
+        isPause = true;
+        stop_once = true;
+    }
 
     if (!stopBySpace)
         isPause = true;
@@ -66,6 +75,11 @@ void ShowUtils::init(std::string name, bool _stopBySpace)
     init(name, &ShowUtils::keyboardEvent);
 }
 
+void ShowUtils::setBackGroundColor(float r, float g, float b)
+{
+    viewer->setBackgroundColor(r, g, b);
+}
+
 PCLViewer *ShowUtils::getViewer() const { return viewer; }
 
 using namespace pcl::visualization;
@@ -85,36 +99,62 @@ void ShowUtils::ShowPose(const Matrix4d& t, int pose_id) const
     viewer->spinOnce();
 }
 
-void ShowUtils::ShowCloud(const PointCloud::Ptr& cloud,
-    int id, string cloud_name, std::string show_field, int point_size) const
+void ShowUtils::RemovePointCloud(string show_id)
+{
+    if(viewer->contains(show_id))
+        viewer->removePointCloud(show_id);
+}
+
+void ShowUtils::RemoveShape(string show_id)
+{
+    if(viewer->contains(show_id))
+        viewer->removeShape(show_id);
+}
+
+void ShowUtils::ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
+        std::string show_id, 
+        std::string show_field,
+        int point_size) const
 {
     checkInited();
-
-    if(cloud_name == "cloud_Floor" || cloud_name == "cloud_Ceiling")
-        std::cout << cloud->points.size() << std::endl;
-
-    std::string cloud_id = cloud_name + to_string(id);
-
-    if (viewer->contains(cloud_id))
-        //viewer->updatePointCloud<PointType>(cloud, cloud_id); 
-        viewer->removePointCloud(cloud_id);
-    //else
-    //{    
+     if (viewer->contains(show_id))
+        viewer->updatePointCloud<PointType>(cloud, show_id); 
+        //viewer->removePointCloud(show_id);
+    else
+    {    
         if(show_field == "custom")
         {
             PointCloudColorHandlerCustom<PointType> color_handler(cloud, 43, 213, 179);
-            viewer->addPointCloud(cloud, color_handler, cloud_id);
-            viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_OPACITY, 0.3, cloud_id);
+            viewer->addPointCloud(cloud, color_handler, show_id);
+            viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_OPACITY, 0.3, show_id);
+        }
+        else if(show_field == "black")
+        {
+            PointCloudColorHandlerCustom<PointType> color_handler(cloud, 0, 0, 0);
+            viewer->addPointCloud(cloud, color_handler, show_id);
+            //viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_OPACITY, 0.3, show_id);
+        }
+        else if(show_field == "dark blue")
+        {
+            PointCloudColorHandlerCustom<PointType> color_handler(cloud, 73, 90, 128);
+            viewer->addPointCloud(cloud, color_handler, show_id);
         }
         else
         {
             PointCloudColorHandlerGenericField<PointType> cloud_handle(cloud, show_field);
-            viewer->addPointCloud(cloud, cloud_handle, cloud_id);
+            viewer->addPointCloud(cloud, cloud_handle, show_id);
         }
 
-        viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, point_size, cloud_id);
-    //}
+        viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, point_size, show_id);
+    }
     viewer->spinOnce();
+}
+
+void ShowUtils::ShowCloud(const PointCloud::Ptr& cloud,
+    int id, string cloud_name, std::string show_field, int point_size) const
+{
+    std::string cloud_id = cloud_name + to_string(id);
+    ShowCloud(cloud, cloud_id, show_field, point_size);
 }
 
 void ShowUtils::ShowPlane(const Eigen::Vector4d& ABCD, const Eigen::Vector3d& center,
@@ -128,7 +168,7 @@ void ShowUtils::ShowPlane(const Eigen::Vector4d& ABCD, const Eigen::Vector3d& ce
     // 显示名称
     viewer->addText3D(showid, XYZ(center[0], center[1], center[2]), 
         0.5, // text scale
-        1.0, 1.0, 1.0, // color 
+        0.0, 0.0, 0.0, // color 
         "text_"+showid);
         
     if(!only_show_name)
@@ -167,12 +207,13 @@ void ShowUtils::ShowLine(const pcl::PointXYZ& start,
 
     switch(label)
     {
-        case 0: 
-            r = 255; g = 0; b = 153; break;
+        case 0:
+            r = 255; g = 0; b = 0; break;
+            //r = 255; g = 0; b = 153; break;
         case 1:
-            r = 9; g = 151; b = 247; break;
+            r = 0; g = 255; b = 0; break;
         case 2:
-            r = 153; g = 255; b = 0; break;
+            r = 0; g = 0; b = 255; break;
     };
 
     //if(viewer->contains(showid))

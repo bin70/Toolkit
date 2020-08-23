@@ -23,10 +23,10 @@ public:
                         float y1 = -20.0, float y2 = 20.0,
                         float z1 = -2.0, float z2 = 7.0) { _x1 = x1; _x2 = x2; _y1 = y1; _y2 = y2; _z1 = z1; _z2 = z2;}
 
-    void setGridFilter(float res = 0.03) { grid_filter = true; grid_res = res;  }
-    void setRandFilter(float percent = 0.3) { random_filter = true; decimate_percentage = percent; }
-    void setOutlierFilter(int knn = 10, float std = 1.5) { outlier_knn = knn; std = outlier_std; }
-    void setRadiusFilter(int knn = 20, float r = 0.5) { radius_knn = knn; radius = r; }
+    void setGridFilter(float res = 0.03) { grid_filter = true; grid_res = res; grid_filter = true; }
+    void setRandFilter(float percent = 0.3) { random_filter = true; decimate_percentage = percent; random_filter = true; }
+    void setOutlierFilter(int knn = 10, float std = 1.5) { outlier_knn = knn; outlier_std = std; outlier_filter = true; }
+    void setRadiusFilter(int knn = 20, float r = 0.5) { radius_knn = knn; radius = r; radius_filter = true;}
     
     bool filter(PointCloud::Ptr cloud, PointCloud::Ptr cloud_filtered)
     {
@@ -84,6 +84,8 @@ public:
             *temp = *cloud_filtered;
         }
 
+        std::cout << "after outlier:" << cloud_filtered->points.size() << std::endl;
+
         if(radius_filter)
         {
             pcl::RadiusOutlierRemoval<PointType> rad;
@@ -92,6 +94,8 @@ public:
             rad.setMinNeighborsInRadius(radius_knn);
             rad.filter(*cloud_filtered);
         }
+
+        std::cout << "after radius:" << cloud_filtered->points.size() << std::endl;
 
         return true;
 
