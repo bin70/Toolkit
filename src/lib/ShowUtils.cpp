@@ -117,11 +117,13 @@ void ShowUtils::ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
         int point_size) const
 {
     checkInited();
+
+
      if (viewer->contains(show_id))
-        viewer->updatePointCloud<PointType>(cloud, show_id); 
-        //viewer->removePointCloud(show_id);
-    else
-    {    
+        //viewer->updatePointCloud<PointType>(cloud, show_id); 
+        viewer->removePointCloud(show_id);
+    //else
+    //{    
         if(show_field == "custom")
         {
             PointCloudColorHandlerCustom<PointType> color_handler(cloud, 43, 213, 179);
@@ -146,7 +148,7 @@ void ShowUtils::ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
         }
 
         viewer->setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, point_size, show_id);
-    }
+    //}
     viewer->spinOnce();
 }
 
@@ -168,7 +170,7 @@ void ShowUtils::ShowPlane(const Eigen::Vector4d& ABCD, const Eigen::Vector3d& ce
     // 显示名称
     viewer->addText3D(showid, XYZ(center[0], center[1], center[2]), 
         0.5, // text scale
-        0.0, 0.0, 0.0, // color 
+        1.0, 1.0, 1.0, // color 
         "text_"+showid);
         
     if(!only_show_name)
