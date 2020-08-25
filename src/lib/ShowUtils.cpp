@@ -86,17 +86,29 @@ using namespace pcl::visualization;
 using namespace std;
 using namespace Eigen;
 
-void ShowUtils::ShowPose(const Matrix4d& t, int pose_id) const
+void ShowUtils::ShowPose(const Matrix4d& t, int pose_id, bool is_keep) const
 {
     Transform<double, 3, Affine> tf(t);
 
-    string poseid = "reference" + to_string(pose_id);
+    static pcl::PointXYZ start = pcl::PointXYZ(0, 0, 0);
+    static pcl::PointXYZ end;
+
+    end = pcl::PointXYZ(t(0,3), t(1,3), t(2,3));
+    string showid = "trajectory"+to_string(pose_id);
+    viewer->addLine(start, end, 255, 255, 255, showid);
+    viewer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, 2, showid);
+
+    string poseid = "reference";
+    
+    if(is_keep) poseid += to_string(pose_id);
     
     if (viewer->contains(poseid))
         viewer->removeCoordinateSystem(poseid);
 
     viewer->addCoordinateSystem(1.0, (const Affine3f)tf, poseid);
     viewer->spinOnce();
+
+    start = end;
 }
 
 void ShowUtils::RemovePointCloud(string show_id)
@@ -210,16 +222,17 @@ void ShowUtils::ShowLine(const pcl::PointXYZ& start,
     switch(label)
     {
         case 0:
-            r = 255; g = 0; b = 0; break;
+            r = 255; g = 0; b = 255; break;
             //r = 255; g = 0; b = 153; break;
         case 1:
-            r = 0; g = 255; b = 0; break;
+            r = 255; g = 0; b = 0; break;
+            //r = 0; g = 255; b = 0; break;
         case 2:
-            r = 0; g = 0; b = 255; break;
+            r = 255; g = 255; b = 0; break;
     };
 
-    //if(viewer->contains(showid))
-    //    viewer->removeShape(showid);
+    if(viewer->contains(showid))
+        viewer->removeShape(showid);
     viewer->addLine(start, end, r, g, b, showid);
     viewer->setShapeRenderingProperties(PCL_VISUALIZER_LINE_WIDTH, line_size, showid);
     viewer->spinOnce(); 
