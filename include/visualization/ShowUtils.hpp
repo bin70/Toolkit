@@ -65,7 +65,7 @@ public:
         int point_size = 2) const;
 
     void ShowCloud(const pcl::PointCloud<PointType>::Ptr& cloud,
-        int id = 0, std::string cloud_name = "cloud", 
+        int id, std::string cloud_name = "cloud", 
         std::string show_field = "intensity",
         int point_size = 1) const;
     
@@ -78,7 +78,7 @@ public:
     void ShowPath3D(const std::vector<pcl::PointXYZI>& path, 
         int path_id, int line_size = 2, int label = 0) const;
     
-    void ShowPose(const Eigen::Matrix4d& t, int pose_id = 0) const;
+    void ShowPose(const Eigen::Matrix4d& t, int pose_id = 0, bool is_keep = false) const;
 
     void ShowText(std::string text, std::string display_id, 
         Eigen::Vector3d position = Eigen::Vector3d::Zero(), 
