@@ -21,13 +21,13 @@ include_directories(${PCL_INCLUDE_DIRS})
 
 include_directories(include)
 
-add_library(ShowUtils SHARED src/lib/ShowUtils.cpp)
+# add_library(ShowUtils SHARED src/lib/ShowUtils.cpp)
 
 # add_executable(pcap2PCD src/Pcap2PCD.cpp)
 # target_link_libraries(pcap2PCD ${PCL_LIBRARIES} -lpcap)
 
-add_executable(mapBuilder src/MapBuilderPCD.cpp)
-target_link_libraries(mapBuilder ShowUtils ${PCL_LIBRARIES})
+# add_executable(mapBuilder src/MapBuilderPCD.cpp)
+# target_link_libraries(mapBuilder ShowUtils ${PCL_LIBRARIES})
 
 # add_executable(offlineEvaluate src/offlineEvaluate.cpp)
 # target_link_libraries(offlineEvaluate ${PCL_LIBRARIES})
@@ -38,4 +38,4 @@ target_link_libraries(mapBuilder ShowUtils ${PCL_LIBRARIES})
 # add_executable(testTransform src/TestTransform.cpp)
 # target_link_libraries(testTransform ${catkin_LIBRARIES})
 
-# add_executable(testMathTool src/TestMathTool.cpp)
+add_executable(tq2matrix src/tq2matrix.cpp)

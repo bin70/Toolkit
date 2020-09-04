@@ -6,7 +6,6 @@
 using namespace Eigen;
 using namespace std;
 
-typedef Eigen::Matrix<double, 6, 1> Vector6d;
 typedef Eigen::Matrix<double, 7, 1> Vector7d;
 
 int main(int argc, const char** argv)
