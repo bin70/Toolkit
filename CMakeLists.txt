@@ -21,7 +21,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 
 include_directories(include)
 
-# add_library(ShowUtils SHARED src/lib/ShowUtils.cpp)
+add_library(ShowUtils SHARED src/lib/ShowUtils.cpp)
 
 # add_executable(pcap2PCD src/Pcap2PCD.cpp)
 # target_link_libraries(pcap2PCD ${PCL_LIBRARIES} -lpcap)
@@ -38,4 +38,4 @@ include_directories(include)
 # add_executable(testTransform src/TestTransform.cpp)
 # target_link_libraries(testTransform ${catkin_LIBRARIES})
 
-add_executable(tq2matrix src/tq2matrix.cpp)
+# add_executable(tq2matrix src/tq2matrix.cpp)
