@@ -9,9 +9,12 @@
 #include <eigen3/Eigen/Dense>
 #include <utils/common.hpp>
 
+using std::string;
+using Eigen::Matrix4d;
+
 class FileOperator{
-    typedef std::string string;
-    typedef Eigen::Matrix4d Matrix;
+    //typedef std::string string;    
+    //typedef Eigen::Matrix4d Matrix;
 
 public:
     ///************************************************************************/
@@ -82,11 +85,11 @@ public:
         return path.substr(0, path_end);
     }
 
-    Matrix loadMatrix(std::string path)
+    Matrix4d loadMatrix(std::string path)
     {
         if(access(path.c_str(), 0) != 0) perror("load matrix error: ");
         std::ifstream fmatrix(path.c_str());
-        Matrix m;
+        Matrix4d m;
         for(int i=0; i<4; ++i)
             for(int j=0; j<4; ++j)
                 fmatrix >> m(i, j);
@@ -94,7 +97,7 @@ public:
         return m;
     }
 
-    void writeMatirx(const Matrix& m, std::string path)
+    void writeMatirx(const Matrix4d& m, string path)
     {
         std::ofstream fmatrix(path.c_str());
         for(int i=0; i<4; ++i)
@@ -160,4 +163,9 @@ private:
         }
         return 0;
     }
+};
+
+class DirMaker : public FileOperator{    
+public:    
+    DirMaker(string dir_name) { makeDir(dir_name); }
 };
