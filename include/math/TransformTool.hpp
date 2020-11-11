@@ -18,7 +18,7 @@ class TransformTool
 public:
     // 核心函数
     // LOAM中的欧拉角表示->位姿矩阵表示
-    Eigen::Matrix4d euler2matrix(Vector6d &pose)
+    Eigen::Matrix4d euler2matrix(const Vector6d &pose)
     {
         Eigen::Matrix4d m = Eigen::Matrix4d::Identity();
         Eigen::Matrix3d Rx = Eigen::AngleAxisd(pose[0], Eigen::Vector3d(1, 0, 0)).toRotationMatrix();
@@ -33,7 +33,7 @@ public:
         return m;
     }
 
-    Vector7d euler2tq(Vector6d &pose)
+    Vector7d euler2tq(const Vector6d &pose)
     {
         Matrix4d m = euler2matrix(pose);
         return matrix2tq(m);
