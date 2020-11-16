@@ -17,6 +17,7 @@ public:
 	PointCloudReader() : inited(false) {}
 	~PointCloudReader() {}
 	int getScanNum(){return nScans;}
+	int getTotalFrameNum(){ return reader.totalFrame(); }
 	void setPcapFile(std::string _fileName) { fileNamePcap = _fileName; }
 	void setCalibFile(std::string _fileName) { calibrationPath = _fileName; }
 	void setDataType(int data_type)

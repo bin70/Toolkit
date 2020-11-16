@@ -301,9 +301,11 @@ private:
 
         traj_file_ >> curPose.frameID;
         for(int i=0; i<7; ++i) traj_file_ >> tq(i);
+        
         curPose.tf = tt.tq2matrix(tq);
-
-        traj.insert( std::make_pair(curPose.frameID, curPose) );
+        curPose.loamTrans = tt.matrix2euler(curPose.tf);
+        //curPose.loamTrans = tt.tq2euler(tq);
+        traj.insert( {curPose.frameID, curPose} );
         return true;
     }
 
