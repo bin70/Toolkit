@@ -4,10 +4,12 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <stdio.h>
-#include <common.hpp>
-#include <point_cloud/common.hpp>
-#include <io/FileOperator.hpp>
 #include <algorithm>
+
+#include <lidar_slam_toolkit/common.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
+#include <lidar_slam_toolkit/io/FileOperator.hpp>
+
 
 inline int frameid(std::string path)
 {

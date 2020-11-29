@@ -21,6 +21,7 @@ ShowUtils su;
 
 // vlp32的配置
 LidarConfig lidar_config(VLP32);
+inline float norm(PointType &p){ return std::sqrt(p.x*p.x + p.y*p.y + p.z*p.z);}
 
 int main(int argc, const char** argv)
 {
@@ -28,6 +29,7 @@ int main(int argc, const char** argv)
     parser.addArgument("-i", "--input_dir", true);
     parser.addArgument("-t", "--traj_path", true);
     parser.addArgument("-o", "--out_dir", true);
+    parser.addArgument("-v", "--valid_distance");
     parser.addArgument("-b", "--begin_id");
     parser.addArgument("-e", "--end_id");
     parser.addArgument("-s", "--show_cloud");
@@ -41,9 +43,9 @@ int main(int argc, const char** argv)
 
     float resolution = parser.getOpt<float>("resolution", 0.03);
     bool show_cloud = parser.getOpt<bool>("show_cloud", false);
-    
-    if(show_cloud)
-        su.init("Map Builder", true);
+    float valid_distance = parser.getOpt<float>("valid_distance", 25.0);
+
+    if(show_cloud) su.init("Map Builder", true);
 
     PCDReader reader(input_dir);
     TrajIO traj(traj_path);
@@ -76,11 +78,22 @@ int main(int argc, const char** argv)
         
         PointCloud::Ptr cloud_filtered(new PointCloud);
         
-        #if RANGE_LIMIT
-        
-        #else
-            pcl::copyPointCloud(*cloud, *cloud_filtered);
-        #endif
+        /*
+        for(int i=0; i<cloud->points.size(); ++i)
+        {
+            PointType p;
+
+            if(frame_id >= 11044 && frame_id <= 11074 
+                || frame_id >= 11616 && frame_id <= 11666) 
+                valid_distance = 20.0;
+            else valid_distance = parser.getOpt<float>("valid_distance", 25.0);
+
+            if(norm(cloud->points[i]) < valid_distance)
+            {
+                pcl::copyPoint(cloud->points[i], p);
+                cloud_filtered->points.push_back(p);
+            }
+        }*/
 
         // 离群点滤波器
         pcl::StatisticalOutlierRemoval<PointType> stat_removal;
@@ -104,8 +117,9 @@ int main(int argc, const char** argv)
         {
             su.ShowCloud(map.getMapPtr(), 0, "map", "custom");
             // 保留初始坐标系，显示每一帧的坐标系
-            if(frame_id == begin_id) su.ShowPose(m, 1);
-            else su.ShowPose(m);
+            
+            //if(frame_id == begin_id) su.ShowPose(m, 1);
+            //else su.ShowPose(m);
 
             // 空格控制暂停
             su.waitSpace();

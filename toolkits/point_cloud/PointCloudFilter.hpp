@@ -1,7 +1,7 @@
 #pragma once
-#include <common.hpp>
-#include <point_cloud/common.hpp>
-#include <point_cloud/common.hpp>
+#include <lidar_slam_toolkit/common.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
 #include <pcl/common/transforms.h>
 #include <pcl/common/common.h>
 #include <pcl/filters/filter.h>

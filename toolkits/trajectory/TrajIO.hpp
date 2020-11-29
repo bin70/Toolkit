@@ -3,10 +3,10 @@
 #include <time.h>
 #include <iomanip>
 #include <map>
-#include <common.hpp>
-#include <point_cloud/common.hpp>
-#include <math/TransformTool.hpp>
-#include <io/FileOperator.hpp>
+#include <lidar_slam_toolkit/common.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
+#include <lidar_slam_toolkit/math/TransformTool.hpp>
+#include <lidar_slam_toolkit/io/FileOperator.hpp>
 
 enum TrajType{
     ROS_LOAM, G2OT, G2O, KITTI

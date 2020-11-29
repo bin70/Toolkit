@@ -2,24 +2,47 @@
 
 #ifndef MAP_MANAGER_H
 #define MAP_MANAGER_H
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <cstdlib>
+#include <stdlib.h>
+#include <string.h>
 
+#include <pcl/point_cloud.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/common/transforms.h>
 #include <pcl/octree/octree_search.h>
 #include <pcl/filters/voxel_grid.h>
-#include <common.hpp>
-#include <point_cloud/common.hpp>
 
+typedef pcl::PointXYZI PointType;
+//typedef pcl::PointXYZINormal PointType;
+typedef pcl::PointCloud<PointType> PointCloud;
 typedef pcl::octree::OctreePointCloudSearch<PointType> OctreePointCloudSearch;
 typedef OctreePointCloudSearch::Ptr OctreePtr;
 
 class MapManager
 {
 public:
+  MapManager(){}
+
   MapManager(float map_resolution)
     : octree(new OctreePointCloudSearch(map_resolution)),
-      map(new PointCloud),
-      leafsize(map_resolution) {}
+      map(new PointCloud), leafsize(map_resolution) {
+        octree->setInputCloud(map);
+        octree->addPointsFromInputCloud();
+      }
 
   ~MapManager(){}
+
+  void init(double resolution){
+    octree = boost::shared_ptr<OctreePointCloudSearch>(new OctreePointCloudSearch(resolution));
+    map = boost::shared_ptr<PointCloud>(new PointCloud());
+    leafsize = resolution;
+    octree->setInputCloud(map);
+    octree->addPointsFromInputCloud();
+  }
 
   void update()
   {
@@ -62,7 +85,7 @@ public:
   void AddFrameToMap(PointCloud::Ptr frame)
   {
     PointType tempPoint;
-    for (int i = 0; i < frame->points.size(); i++)
+    for (unsigned int i = 0; i < frame->points.size(); i++)
     { // Add frame to Global Map
       tempPoint = frame->points[i];
       if (!octree->isVoxelOccupiedAtPoint(tempPoint))
@@ -70,9 +93,18 @@ public:
     }
   }
 
+  // 只是对AddFrameToMap的wrapper
   void addFrame(PointCloud::Ptr frame)
   {
     AddFrameToMap(frame);
+  }
+
+  void setNewMap(PointCloud::Ptr frame)
+  {
+    octree->deleteTree();
+    *map = *frame;
+    octree->setInputCloud(map);
+    octree->addPointsFromInputCloud();
   }
 
   void UpdateMap(PointCloud::Ptr cur_frame)

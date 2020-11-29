@@ -1,6 +1,6 @@
 #pragma once
-#include <io/FileOperator.hpp>
-#include <point_cloud/common.hpp>
+#include <lidar_slam_toolkit/io/FileOperator.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
 
 class TXTReader
 {
@@ -77,23 +77,20 @@ bool TXTReader::readPointCloud(PointCloud::Ptr &cloud, std::string filename)
         // Ignore lines
         if (line.empty()) continue;
 
+        std::stringstream ss(line);
+
         // Tokenize the line
-        boost::trim(line);
-        boost::split(st, line, boost::is_any_of("\t\r "), boost::token_compress_on);
+        //boost::trim(line);
+        //boost::split(st, line, boost::is_any_of("\t\r "), boost::token_compress_on);
 
         // x y z intensity
-        if (st.size() != data_columns) continue;
+        //if (st.size() != data_columns) continue;
 
         PointType p;
-        p.x = val<float>(st[0]);
-        p.y = val<float>(st[1]);
-        p.z = val<float>(st[2]);
+        if(!(ss >> p.x) || !(ss >> p.y) || !(ss >> p.z) ) return false;
         
         // 25m
-        // if (norm(p) > 25.0) continue;
-        
-        if (data_columns == 4)
-            p.intensity = val<float>(st[3]);;
+        if (norm(p) > 25.0) continue;
         
         cloud->points.push_back(p);
     }

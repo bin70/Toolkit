@@ -1,6 +1,6 @@
 #pragma once
-#include <common.hpp>
-#include <point_cloud/common.hpp>
+#include <lidar_slam_toolkit/common.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
 
 // 对应于实验室采用的三代不同类型的激光雷达
 enum LidarType

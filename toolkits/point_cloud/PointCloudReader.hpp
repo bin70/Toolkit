@@ -1,8 +1,8 @@
 #pragma once
-#include <point_cloud/common.hpp>
-#include <io/FileOperator.hpp>
-#include <io/PcapReader.hpp>
-#include <velodyne/LidarConfig.hpp>
+#include <lidar_slam_toolkit/point_cloud/common.hpp>
+#include <lidar_slam_toolkit/io/FileOperator.hpp>
+#include <lidar_slam_toolkit/io/PcapReader.hpp>
+#include <lidar_slam_toolkit/velodyne/LidarConfig.hpp>
 
 //=========================================//
 // data_n 数组内的数据说明:
@@ -28,13 +28,13 @@ public:
 		switch(data_type)
 		{
 		case 0:
-			setCalibFile("../resource/VLP-16.xml");
+			setCalibFile("resource/VLP-16.xml");
 			break;
     	case 1:
-        	setCalibFile("../resource/HDL-32.xml");
+        	setCalibFile("resource/HDL-32.xml");
 			break;
     	case 2:
-        	setCalibFile("../resource/VLP-32c.xml");
+        	setCalibFile("resource/VLP-32c.xml");
 			break;
     	default:
         	std::cout << "Data type error!" << std::endl;

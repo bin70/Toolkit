@@ -2,7 +2,6 @@
 #include <io/PcapReader.hpp>
 #include <io/PCDOperator.hpp>
 #include <io/FileOperator.hpp>
-#include <visualization/ShowUtils.hpp>
 #include <point_cloud/PointCloudFilter.hpp>
 #include <point_cloud/Synchrotimer.hpp>
 #include <utils/argparse.hpp>
@@ -17,8 +16,6 @@ float limit_distance = 25.0;
 int begin_id = 0;
 int end_id = -1;
 FileOperator fop;
-ShowUtils su;
-bool ShowUtils::isPause = true;
 
 int main(int argc, const char **argv)
 {
@@ -44,14 +41,6 @@ int main(int argc, const char **argv)
         begin_id = parser.get<int>("begin_id");
     if(parser.count("end_id"))
         end_id = parser.get<int>("end_id");
-
-    
-
-    if (parser.count("show"))
-    {   
-        is_show = parser.get<bool>("show");
-        su.init("Show PCD", &ShowUtils::keyboardEvent);
-    }
 
     PointCloudReader reader;
     reader.setPcapFile(parser.get("pcap"));
@@ -81,7 +70,7 @@ int main(int argc, const char **argv)
     consoleProgress(0);
 
     // 把201标定到202上的矩阵
-    Matrix4d calibMatrix = fop.loadMatrix("../resource/autoCalibMatrix.txt"); 
+    Matrix4d calibMatrix = fop.loadMatrix("resource/autoCalibMatrix.txt"); 
 
     while (reader.readPointCloud(cloud, frameID))
     {
@@ -132,11 +121,6 @@ int main(int argc, const char **argv)
         if(parser.count("calib_matrix"))
             pcl::transformPointCloud(*cloud, *cloud, calibMatrix);
 
-        if (is_show)
-        {
-            su.showText(to_string(frameID), "frameID");
-            su.ShowCloud(cloud, "cloud", "curvature");
-        }
         savePCD(cloud, out_dir, frameID);
         
         // 间隔几帧
